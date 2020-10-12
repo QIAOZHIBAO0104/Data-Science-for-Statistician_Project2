@@ -1,0 +1,46 @@
+---
+title: "ST558 PROJECT2"
+author: "Qiaozhi Bao"
+date: "2020/10/6"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+# Load all libraries
+library(tidyverse)
+library(ggplot2)
+library(randomForest)
+library(caret)
+library(tree)
+library(gbm)
+set.seed(1)
+```
+```{r}
+# Read in data and removing the first two columns as they are not predictive variables.
+news_pop <- read_csv('OnlineNewsPopularity.csv') %>% select(-`url`,-`timedelta`)
+news_pop
+```
+```{r}
+# First to see Monday data
+Mon_data <- news_pop %>% filter(`weekday_is_monday`==1)
+# Check if we have missing values, answer is 'No'
+sum(is.na(Mon_data))
+```
+As there is no missing value in our Monday data, we will step to split data.
+```{r}
+# Split Monday data,70% for training set and 30% for test set
+train <- sample(1:nrow(Mon_data),size = nrow(Mon_data)*0.7)
+test <- dplyr::setdiff(1:nrow(Mon_data),train)
+Mon_train <-Mon_data[train,]
+Mon_test <- Mon_data[test,]
+```
+## Data Summarizations
+```{r}
+
+
+```
