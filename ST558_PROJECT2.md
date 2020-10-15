@@ -13,18 +13,24 @@ was published two years ago to summarize a heterogeneous set of features
 about articles published by Mashable in a period of two years. There are
 61 variables in total from the data set above: 58 predictive attributes,
 2 non-predictive and 1 goal field.More details and summarization will be
-discussed later in this project. \#\# The purpose of Analysis  
+discussed later in this project.
+
+## The purpose of Analysis
+
 The purpose of this analysis is to create two models(ensemble and not
 ensemble) to generate the best predict of the response
 attribute–shares.Our analysis will help to determine what kind of
-content would be most popular. \#\# Methods For this project,I first
-split the data into training set and test set,then I examine the data
-with summary statistics and correlation plots to see the relationships
-between predictive attributes and the relationship between predictive
-attributes and response variables,then some meaningless variables were
-moved. I then utilized the caret package to create two models.Tree-based
-model chosen using leave one out cross validation.Boosted tree model
-chosen using cross-validation.
+content would be most popular.
+
+## Methods
+
+For this project,I first split the data into training set and test
+set,then I examine the data with summary statistics and correlation
+plots to see the relationships between predictive attributes and the
+relationship between predictive attributes and response variables,then
+some meaningless variables were moved. I then utilized the caret package
+to create two models.Tree-based model chosen using leave one out cross
+validation.Boosted tree model chosen using cross-validation.
 
 # Data Study
 
@@ -178,109 +184,12 @@ train <- sample(1:nrow(Mon_data),size = nrow(Mon_data)*0.7)
 test <- dplyr::setdiff(1:nrow(Mon_data),train)
 train_data <-Mon_data[train,]
 test_data <- Mon_data[test,]
-train_data
 ```
-
-    ## # A tibble: 4,662 x 52
-    ##    n_tokens_title n_tokens_content n_unique_tokens n_non_stop_words
-    ##             <dbl>            <dbl>           <dbl>            <dbl>
-    ##  1             12              158           0.684             1.00
-    ##  2              8              198           0.513             1.00
-    ##  3             12              426           0.463             1.00
-    ##  4             15              187           0.618             1.00
-    ##  5              8              302           0.661             1.00
-    ##  6             12              136           0.769             1.00
-    ##  7             13              755           0.435             1.00
-    ##  8             11              384           0.610             1.00
-    ##  9              8              456           0.541             1.00
-    ## 10             12             1056           0.438             1.00
-    ## # … with 4,652 more rows, and 48 more variables:
-    ## #   n_non_stop_unique_tokens <dbl>, num_hrefs <dbl>, num_self_hrefs <dbl>,
-    ## #   num_imgs <dbl>, num_videos <dbl>, average_token_length <dbl>,
-    ## #   num_keywords <dbl>, data_channel_is_lifestyle <dbl>,
-    ## #   data_channel_is_entertainment <dbl>, data_channel_is_bus <dbl>,
-    ## #   data_channel_is_socmed <dbl>, data_channel_is_tech <dbl>,
-    ## #   data_channel_is_world <dbl>, kw_min_min <dbl>, kw_max_min <dbl>,
-    ## #   kw_avg_min <dbl>, kw_min_max <dbl>, kw_max_max <dbl>, kw_avg_max <dbl>,
-    ## #   kw_min_avg <dbl>, kw_max_avg <dbl>, kw_avg_avg <dbl>,
-    ## #   self_reference_min_shares <dbl>, self_reference_max_shares <dbl>,
-    ## #   self_reference_avg_sharess <dbl>, is_weekend <dbl>, LDA_00 <dbl>,
-    ## #   LDA_01 <dbl>, LDA_02 <dbl>, LDA_03 <dbl>, LDA_04 <dbl>,
-    ## #   global_subjectivity <dbl>, global_sentiment_polarity <dbl>,
-    ## #   global_rate_positive_words <dbl>, global_rate_negative_words <dbl>,
-    ## #   rate_positive_words <dbl>, rate_negative_words <dbl>,
-    ## #   avg_positive_polarity <dbl>, min_positive_polarity <dbl>,
-    ## #   max_positive_polarity <dbl>, avg_negative_polarity <dbl>,
-    ## #   min_negative_polarity <dbl>, max_negative_polarity <dbl>,
-    ## #   title_subjectivity <dbl>, title_sentiment_polarity <dbl>,
-    ## #   abs_title_subjectivity <dbl>, abs_title_sentiment_polarity <dbl>,
-    ## #   shares <dbl>
-
-``` r
-test_data
-```
-
-    ## # A tibble: 1,999 x 52
-    ##    n_tokens_title n_tokens_content n_unique_tokens n_non_stop_words
-    ##             <dbl>            <dbl>           <dbl>            <dbl>
-    ##  1              9              255           0.605             1.00
-    ##  2             13             1072           0.416             1.00
-    ##  3             12              989           0.434             1.00
-    ##  4             11               97           0.670             1.00
-    ##  5             10              231           0.636             1.00
-    ##  6              9             1248           0.490             1.00
-    ##  7             10              187           0.667             1.00
-    ##  8              9              274           0.609             1.00
-    ##  9              8             1207           0.411             1.00
-    ## 10             13             1248           0.391             1.00
-    ## # … with 1,989 more rows, and 48 more variables:
-    ## #   n_non_stop_unique_tokens <dbl>, num_hrefs <dbl>, num_self_hrefs <dbl>,
-    ## #   num_imgs <dbl>, num_videos <dbl>, average_token_length <dbl>,
-    ## #   num_keywords <dbl>, data_channel_is_lifestyle <dbl>,
-    ## #   data_channel_is_entertainment <dbl>, data_channel_is_bus <dbl>,
-    ## #   data_channel_is_socmed <dbl>, data_channel_is_tech <dbl>,
-    ## #   data_channel_is_world <dbl>, kw_min_min <dbl>, kw_max_min <dbl>,
-    ## #   kw_avg_min <dbl>, kw_min_max <dbl>, kw_max_max <dbl>, kw_avg_max <dbl>,
-    ## #   kw_min_avg <dbl>, kw_max_avg <dbl>, kw_avg_avg <dbl>,
-    ## #   self_reference_min_shares <dbl>, self_reference_max_shares <dbl>,
-    ## #   self_reference_avg_sharess <dbl>, is_weekend <dbl>, LDA_00 <dbl>,
-    ## #   LDA_01 <dbl>, LDA_02 <dbl>, LDA_03 <dbl>, LDA_04 <dbl>,
-    ## #   global_subjectivity <dbl>, global_sentiment_polarity <dbl>,
-    ## #   global_rate_positive_words <dbl>, global_rate_negative_words <dbl>,
-    ## #   rate_positive_words <dbl>, rate_negative_words <dbl>,
-    ## #   avg_positive_polarity <dbl>, min_positive_polarity <dbl>,
-    ## #   max_positive_polarity <dbl>, avg_negative_polarity <dbl>,
-    ## #   min_negative_polarity <dbl>, max_negative_polarity <dbl>,
-    ## #   title_subjectivity <dbl>, title_sentiment_polarity <dbl>,
-    ## #   abs_title_subjectivity <dbl>, abs_title_sentiment_polarity <dbl>,
-    ## #   shares <dbl>
 
 # Data Summarizations
 
-## Response variable
+## Predictor Variables
 
-First I plot the histogram of the response variable `shares` and found
-it is a right-skewed distribution variable,then I performed
-log-transformation on `shares` and plot histogram too.
-
-``` r
-# Histogram of the response variable
-ggplot(data=train_data, aes(x=shares))+geom_histogram()
-```
-
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-
-![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
-
-``` r
-train_data$shares <- log(train_data$shares)
-ggplot(data=train_data, aes(x=shares))+geom_histogram()+ xlab('Log(shares)')
-```
-
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-
-![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-6-2.png)<!-- --> \#\#
-Predictor Variables  
 I used the summary() function to calculate summary statistics for each
 of the quantitative variables in Mon\_data.
 
@@ -394,12 +303,12 @@ summary(train_data)
     ##  3rd Qu.:0.5000     3rd Qu.: 0.13636         3rd Qu.:0.5000        
     ##  Max.   :1.0000     Max.   : 1.00000         Max.   :0.5000        
     ##  abs_title_sentiment_polarity     shares      
-    ##  Min.   :0.000                Min.   : 1.386  
-    ##  1st Qu.:0.000                1st Qu.: 6.817  
-    ##  Median :0.000                Median : 7.244  
-    ##  Mean   :0.153                Mean   : 7.459  
-    ##  3rd Qu.:0.250                3rd Qu.: 7.901  
-    ##  Max.   :1.000                Max.   :13.389
+    ##  Min.   :0.000                Min.   :     4  
+    ##  1st Qu.:0.000                1st Qu.:   913  
+    ##  Median :0.000                Median :  1400  
+    ##  Mean   :0.153                Mean   :  3641  
+    ##  3rd Qu.:0.250                3rd Qu.:  2700  
+    ##  Max.   :1.000                Max.   :652900
 
 ``` r
 correlation1 <- cor(train_data[,c(1:10,52)])
@@ -407,7 +316,7 @@ corrplot(correlation1,type='upper',tl.pos = 'lt')
 corrplot(correlation1,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ``` r
 correlation2 <- cor(train_data[,c(11:20,52)])
@@ -415,7 +324,7 @@ corrplot(correlation2,type='upper',tl.pos = 'lt')
 corrplot(correlation2,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-7-2.png)<!-- -->
+![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-6-2.png)<!-- -->
 
 ``` r
 correlation3 <- cor(train_data[,c(21:30,52)])
@@ -428,7 +337,7 @@ corrplot(correlation3,type='upper',tl.pos = 'lt')
 corrplot(correlation3,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-7-3.png)<!-- -->
+![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-6-3.png)<!-- -->
 
 ``` r
 correlation4 <- cor(train_data[,c(31:40,52)])
@@ -436,7 +345,7 @@ corrplot(correlation4,type='upper',tl.pos = 'lt')
 corrplot(correlation4,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-7-4.png)<!-- -->
+![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-6-4.png)<!-- -->
 
 ``` r
 correlation5 <- cor(train_data[,c(41:51,52)])
@@ -444,11 +353,12 @@ corrplot(correlation5,type='upper',tl.pos = 'lt')
 corrplot(correlation5,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-7-5.png)<!-- --> From
-the correlation plot,I decided to remove some meaningless
+![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-6-5.png)<!-- -->
+
+From the correlation plot,I decided to remove some meaningless
 variables:`kw_min_min`,`kw_avg_min`,`kw_min_avg`,`is_weekend` Also some
 highly correlated variables will be removed too,then we will get a new
-train set and test set
+train set and test set.
 
 ``` r
 train_data <- train_data %>% select(!starts_with("LDA"),-is_weekend)
@@ -456,41 +366,6 @@ test_data <- test_data %>% select(!starts_with("LDA"),-is_weekend)
 train_data <- train_data %>% select(!starts_with('kw'))
 test_data <- train_data %>% select(!starts_with('kw'))
 ```
-
-``` r
-train_data
-```
-
-    ## # A tibble: 4,662 x 37
-    ##    n_tokens_title n_tokens_content n_unique_tokens n_non_stop_words
-    ##             <dbl>            <dbl>           <dbl>            <dbl>
-    ##  1             12              158           0.684             1.00
-    ##  2              8              198           0.513             1.00
-    ##  3             12              426           0.463             1.00
-    ##  4             15              187           0.618             1.00
-    ##  5              8              302           0.661             1.00
-    ##  6             12              136           0.769             1.00
-    ##  7             13              755           0.435             1.00
-    ##  8             11              384           0.610             1.00
-    ##  9              8              456           0.541             1.00
-    ## 10             12             1056           0.438             1.00
-    ## # … with 4,652 more rows, and 33 more variables:
-    ## #   n_non_stop_unique_tokens <dbl>, num_hrefs <dbl>, num_self_hrefs <dbl>,
-    ## #   num_imgs <dbl>, num_videos <dbl>, average_token_length <dbl>,
-    ## #   num_keywords <dbl>, data_channel_is_lifestyle <dbl>,
-    ## #   data_channel_is_entertainment <dbl>, data_channel_is_bus <dbl>,
-    ## #   data_channel_is_socmed <dbl>, data_channel_is_tech <dbl>,
-    ## #   data_channel_is_world <dbl>, self_reference_min_shares <dbl>,
-    ## #   self_reference_max_shares <dbl>, self_reference_avg_sharess <dbl>,
-    ## #   global_subjectivity <dbl>, global_sentiment_polarity <dbl>,
-    ## #   global_rate_positive_words <dbl>, global_rate_negative_words <dbl>,
-    ## #   rate_positive_words <dbl>, rate_negative_words <dbl>,
-    ## #   avg_positive_polarity <dbl>, min_positive_polarity <dbl>,
-    ## #   max_positive_polarity <dbl>, avg_negative_polarity <dbl>,
-    ## #   min_negative_polarity <dbl>, max_negative_polarity <dbl>,
-    ## #   title_subjectivity <dbl>, title_sentiment_polarity <dbl>,
-    ## #   abs_title_subjectivity <dbl>, abs_title_sentiment_polarity <dbl>,
-    ## #   shares <dbl>
 
 # First Model
 
@@ -500,31 +375,20 @@ train_data
 tree.method <- train(shares ~.,data = train_data,method='rpart',
                        preProcess = c("center","scale"),
                      trControl = trainControl(method ='LOOCV'))
-```
-
-``` r
 tree.method$results
 ```
 
-    ##           cp      RMSE    Rsquared       MAE
-    ## 1 0.00853208 0.9669950 0.016740386 0.7327253
-    ## 2 0.01015569 0.9778566 0.002148338 0.7590913
-    ## 3 0.04065966 1.0251815 0.152051399 0.8103113
+    ##            cp     RMSE     Rsquared      MAE
+    ## 1 0.007375969 13471.12 0.0018949719 3671.651
+    ## 2 0.008182999 13507.98 0.0009579238 4035.849
+    ## 3 0.081395238 13285.95 0.1336924824 3713.979
 
 ``` r
 tree.method$bestTune
 ```
 
     ##           cp
-    ## 1 0.00853208
-
-``` r
-pred.tree <- predict(tree.method,test_data)
-postResample(pred.tree,test_data$shares)
-```
-
-    ##       RMSE   Rsquared        MAE 
-    ## 0.93558824 0.06097103 0.69938961
+    ## 3 0.08139524
 
 # Second Model
 
@@ -536,12 +400,50 @@ boosted.method <- train(shares ~.,data = train_data,method = 'gbm',
                       trControl = trainControl(method = 'repeatedcv', number=5,repeats =2),
                       preProcess = c("center","scale"),
                       verbose = FALSE)
+
+boosted.method$results
 ```
+
+    ##   shrinkage interaction.depth n.minobsinnode n.trees     RMSE    Rsquared
+    ## 1       0.1                 1             10      50 12202.98 0.005178884
+    ## 4       0.1                 2             10      50 12056.97 0.010895614
+    ## 7       0.1                 3             10      50 12072.66 0.010107471
+    ## 2       0.1                 1             10     100 12410.96 0.005192754
+    ## 5       0.1                 2             10     100 12178.36 0.009615425
+    ## 8       0.1                 3             10     100 12229.12 0.010998467
+    ## 3       0.1                 1             10     150 12534.34 0.005102429
+    ## 6       0.1                 2             10     150 12344.54 0.009635618
+    ## 9       0.1                 3             10     150 12476.67 0.010425069
+    ##        MAE   RMSESD  RsquaredSD    MAESD
+    ## 1 3708.246 6089.810 0.008121008 398.6291
+    ## 4 3671.127 6116.898 0.017363074 372.8888
+    ## 7 3670.502 6139.611 0.008035749 385.8570
+    ## 2 3741.984 5968.911 0.009603641 376.7554
+    ## 5 3666.842 6060.915 0.013826321 395.7626
+    ## 8 3706.386 6030.132 0.009435329 411.5748
+    ## 3 3780.922 5918.649 0.009559510 382.9258
+    ## 6 3681.425 6010.724 0.013108876 429.5052
+    ## 9 3773.500 5887.240 0.008993298 414.1116
 
 ``` r
-pred.boost <- predict(boosted.method,test_data)
-boostRMSE <- sqrt(mean((pred.boost- test_data$shares)^2))
-boostRMSE
+boosted.method$bestTune
 ```
 
-    ## [1] 0.8810502
+    ##   n.trees interaction.depth shrinkage n.minobsinnode
+    ## 4      50                 2       0.1             10
+
+``` r
+# predict values on test set and compare RMSE for two models
+pred.tree <- predict(tree.method,test_data)
+pred.boost <- predict(boosted.method,test_data)
+compare <- rbind(postResample(pred.tree,test_data$shares),postResample(pred.boost,test_data$shares))
+rownames(compare)<-c("Tree method","Boosted method")
+compare
+```
+
+    ##                    RMSE  Rsquared      MAE
+    ## Tree method    13264.25        NA 3685.593
+    ## Boosted method 12372.45 0.1711358 3569.803
+
+From the result we can see the boosted method generates smaller RMSE
+which is the same as we expected.
