@@ -1,0 +1,143 @@
+---
+title: "ST558 PROJECT2"
+author: "Qiaozhi Bao"
+date: "2020/10/6"
+params:
+  weekday: weekday_is_monday
+output:
+  rmarkdown::github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=TRUE, eval=FALSE, echo=FALSE}
+rmarkdown::render("ST558 PROJECT2.Rmd", output_file= "README.md")
+```
+# Introduction  
+## Describe the data  
+The [Online News Popularity data set]("https://archive.ics.uci.edu/ml/datasets/Online+News+Popularity") was published two years ago to summarize a heterogeneous set of features about articles published by Mashable in a period of two years.
+There are 61 variables in total from the data set above: 58 predictive attributes, 2 non-predictive and 1 goal field.More details and summarization will be discussed later in this project.
+##  The purpose of Analysis  
+The purpose of this analysis is to create two models(ensemble and not ensemble) to generate the best predict of the response attribute--shares.Our analysis will help to determine what kind of content would be most popular.
+## Methods
+For this project,I first split the data into training set and test set,then I examine the data with summary statistics and correlation plots to see the relationships between predictive attributes and the relationship between predictive attributes and response variables,then some meaningless variables were moved.
+I then utilized the caret package to create two models.Tree-based model chosen using leave one out cross validation.Boosted tree model chosen using cross-validation.
+
+# Data Study
+## Description of the Used Data
+
+```{r}
+# Load all libraries
+library(tidyverse)
+library(ggplot2)
+library(randomForest)
+library(caret)
+library(tree)
+library(gbm)
+library(corrplot)
+library(e1071)
+set.seed(1)
+```
+```{r}
+# Read in data and removing the first two columns as they are not predictive variables.
+news_pop <- read_csv('./OnlineNewsPopularity.csv') %>% select(-`url`,-`timedelta`)
+```
+
+```{r}
+# First to see Monday data
+Mon_data <- news_pop %>% filter(weekday_is_monday==1)
+Mon_data <- Mon_data%>% select(!starts_with('weekday_is'))
+# Check if we have missing values, answer is 'No'
+sum(is.na(Mon_data))
+Mon_data
+```
+As there is no missing value in our Monday data, we will step to split data.
+By using sample(), with 70% of the data goes to the training set (4,662 observations, Mon_train) and 30% goes to the test set (1,999 observations, Mon_test).
+```{r}
+# Split Monday data,70% for training set and 30% for test set
+set.seed(1)
+train <- sample(1:nrow(Mon_data),size = nrow(Mon_data)*0.7)
+test <- dplyr::setdiff(1:nrow(Mon_data),train)
+train_data <-Mon_data[train,]
+test_data <- Mon_data[test,]
+train_data
+```
+# Data Summarizations
+## Response variable  
+First I plot the histogram of the response variable `shares` and found it is a right-skewed distribution variable,then I performed log-transformation on `shares` and plot histogram too.
+```{r}
+# Histogram of the response variable
+ggplot(data=train_data, aes(x=shares))+geom_histogram()
+train_data$shares <- log(train_data$shares)
+ggplot(data=train_data, aes(x=shares))+geom_histogram()+ xlab('Log(shares)')
+```
+## Predictor Variables  
+I used the summary() function to calculate summary statistics for each of the quantitative variables in Mon_data.
+```{r}
+summary(train_data)
+correlation1 <- cor(train_data[,c(1:10,52)])
+corrplot(correlation1,type='upper',tl.pos = 'lt')
+corrplot(correlation1,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
+correlation2 <- cor(train_data[,c(11:20,52)])
+corrplot(correlation2,type='upper',tl.pos = 'lt')
+corrplot(correlation2,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
+correlation3 <- cor(train_data[,c(21:30,52)])
+corrplot(correlation3,type='upper',tl.pos = 'lt')
+corrplot(correlation3,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
+correlation4 <- cor(train_data[,c(31:40,52)])
+corrplot(correlation4,type='upper',tl.pos = 'lt')
+corrplot(correlation4,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
+correlation5 <- cor(train_data[,c(41:51,52)])
+corrplot(correlation5,type='upper',tl.pos = 'lt')
+corrplot(correlation5,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
+```
+From the correlation plot,I decided to remove some meaningless variables:`kw_min_min`,`kw_avg_min`,`kw_min_avg`,`is_weekend`
+Also some highly correlated variables will be removed too,then we will get a new train set and test set
+```{r}
+train_data <- train_data %>% select(!starts_with("LDA"),-is_weekend)
+test_data <- test_data %>% select(!starts_with("LDA"),-is_weekend)
+train_data <- train_data %>% select(!starts_with('kw'))
+test_data <- train_data %>% select(!starts_with('kw'))
+```
+```{r}
+train_data
+test_data
+```
+
+# First Model
+## Tree based model chosen using leave one out cross validation
+```{r}
+tree.method <- train(shares ~.,data = train_data,method='rpart',
+                       preProcess = c("center","scale"),
+                     trControl = trainControl(method ='LOOCV'))
+```
+```{r}
+tree.method$results
+tree.method$bestTune
+pred <- predict(tree.method,test_data)
+treeRMSE <- sqrt(mean((pred- test_data$shares)^2))
+treeRMSE
+postResample(pred,test_data$shares)
+```
+# Second Model
+## Boosted tree model chosen using cross-validation
+```{r}
+# We will fit the model using repeated CV
+boosted.method <- train(shares ~.,data = train_data,method = 'gbm',
+                      trControl = trainControl(method = 'repeatedcv', number=5,repeats =2),
+                      preProcess = c("center","scale"),
+                      verbose = FALSE)
+```
+
+```{r}
+pred <- predict(boosted.method,test_data)
+boostRMSE <- sqrt(mean((pred- test_data$shares)^2))
+boostRMSE
+```
+
+```{r}
+
+
+```
