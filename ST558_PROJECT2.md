@@ -36,6 +36,12 @@ validation.Boosted tree model chosen using cross-validation.
 
 ## Description of the Used Data
 
+As our study intention is to predict the popularity of an article, so we
+choose the shares as the response variable.After plotting the
+correlations between variables, we removed some high related predictive
+variables. The two models were fitted by remaining variables in the
+training set.
+
 ``` r
 # Load all libraries
 library(tidyverse)
@@ -124,17 +130,23 @@ news_pop <- read_csv('./OnlineNewsPopularity.csv') %>% select(-`url`,-`timedelta
     ## See spec(...) for full column specifications.
 
 ``` r
+params$weekday
+```
+
+    ## [1] "weekday_is_monday"
+
+``` r
 # First to see Monday data
-Mon_data <- news_pop%>% filter(weekday_is_monday==1)
-Mon_data <- Mon_data %>% select(!starts_with('weekday_is'))
+data <- news_pop%>% select(!starts_with('weekday_is'),params$weekday)
 # Check if we have missing values, answer is 'No'
-sum(is.na(Mon_data))
+sum(is.na(data))
 ```
 
     ## [1] 0
 
 ``` r
-Mon_data
+data <-data %>% filter(data[,53]==1) %>%select(-params$weekday)
+data
 ```
 
     ## # A tibble: 6,661 x 52
@@ -180,10 +192,10 @@ observations, Mon\_test).
 ``` r
 # Split Monday data,70% for training set and 30% for test set
 set.seed(1)
-train <- sample(1:nrow(Mon_data),size = nrow(Mon_data)*0.7)
-test <- dplyr::setdiff(1:nrow(Mon_data),train)
-train_data <-Mon_data[train,]
-test_data <- Mon_data[test,]
+train <- sample(1:nrow(data),size = nrow(data)*0.7)
+test <- dplyr::setdiff(1:nrow(data),train)
+train_data <-data[train,]
+test_data <- data[test,]
 ```
 
 # Data Summarizations
@@ -316,7 +328,7 @@ corrplot(correlation1,type='upper',tl.pos = 'lt')
 corrplot(correlation1,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 ``` r
 correlation2 <- cor(train_data[,c(11:20,52)])
@@ -324,7 +336,7 @@ corrplot(correlation2,type='upper',tl.pos = 'lt')
 corrplot(correlation2,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-6-2.png)<!-- -->
+![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-7-2.png)<!-- -->
 
 ``` r
 correlation3 <- cor(train_data[,c(21:30,52)])
@@ -337,7 +349,7 @@ corrplot(correlation3,type='upper',tl.pos = 'lt')
 corrplot(correlation3,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-6-3.png)<!-- -->
+![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-7-3.png)<!-- -->
 
 ``` r
 correlation4 <- cor(train_data[,c(31:40,52)])
@@ -345,7 +357,7 @@ corrplot(correlation4,type='upper',tl.pos = 'lt')
 corrplot(correlation4,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-6-4.png)<!-- -->
+![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-7-4.png)<!-- -->
 
 ``` r
 correlation5 <- cor(train_data[,c(41:51,52)])
@@ -353,14 +365,15 @@ corrplot(correlation5,type='upper',tl.pos = 'lt')
 corrplot(correlation5,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-6-5.png)<!-- -->
+![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-7-5.png)<!-- -->
 
 From the correlation plot,I decided to remove some meaningless
-variables:`kw_min_min`,`kw_avg_min`,`kw_min_avg`,`is_weekend` Also some
-highly correlated variables will be removed too,then we will get a new
-train set and test set.
+variables:`is_weekend`,variables start with “LDA”. Also some highly
+correlated variables will be removed too,like variables start
+with“kw”,then we will get a new train set and test set.
 
 ``` r
+#Remove meaningless variabls
 train_data <- train_data %>% select(!starts_with("LDA"),-is_weekend)
 test_data <- test_data %>% select(!starts_with("LDA"),-is_weekend)
 train_data <- train_data %>% select(!starts_with('kw'))
@@ -446,4 +459,5 @@ compare
     ## Boosted method 12372.45 0.1711358 3569.803
 
 From the result we can see the boosted method generates smaller RMSE
-which is the same as we expected.
+which is the same as we expected.The boosted method tend to have a
+better prediction than the tree based method.

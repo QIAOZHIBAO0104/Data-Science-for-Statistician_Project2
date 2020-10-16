@@ -32,6 +32,9 @@ I then utilized the caret package to create two models.Tree-based model chosen u
 # Data Study
 ## Description of the Used Data
 
+As our study intention is to predict the popularity of an article, so we choose the shares as the response variable.After plotting the correlations between variables, we removed some high related predictive variables.
+The two models were fitted by remaining variables in the training set. 
+
 ```{r}
 # Load all libraries
 library(tidyverse)
@@ -47,28 +50,30 @@ set.seed(1)
 ```{r}
 # Read in data and removing the first two columns as they are not predictive variables.
 news_pop <- read_csv('./OnlineNewsPopularity.csv') %>% select(-`url`,-`timedelta`)
+params$weekday
 ```
 
 ```{r}
 # First to see Monday data
-Mon_data <- news_pop%>% filter(weekday_is_monday==1)
-Mon_data <- Mon_data %>% select(!starts_with('weekday_is'))
+data <- news_pop%>% select(!starts_with('weekday_is'),params$weekday)
 # Check if we have missing values, answer is 'No'
-sum(is.na(Mon_data))
-Mon_data
+sum(is.na(data))
+```
+```{r}
+data <-data %>% filter(data[,53]==1) %>%select(-params$weekday)
+data
 ```
 As there is no missing value in our Monday data, we will step to split data.
 By using sample(), with 70% of the data goes to the training set (4,662 observations, Mon_train) and 30% goes to the test set (1,999 observations, Mon_test).
 ```{r}
 # Split Monday data,70% for training set and 30% for test set
 set.seed(1)
-train <- sample(1:nrow(Mon_data),size = nrow(Mon_data)*0.7)
-test <- dplyr::setdiff(1:nrow(Mon_data),train)
-train_data <-Mon_data[train,]
-test_data <- Mon_data[test,]
+train <- sample(1:nrow(data),size = nrow(data)*0.7)
+test <- dplyr::setdiff(1:nrow(data),train)
+train_data <-data[train,]
+test_data <- data[test,]
 ```
 # Data Summarizations
-
 ## Predictor Variables   
 I used the summary() function to calculate summary statistics for each of the quantitative variables in Mon_data.
 ```{r}
@@ -90,17 +95,20 @@ corrplot(correlation5,type='upper',tl.pos = 'lt')
 corrplot(correlation5,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-From the correlation plot,I decided to remove some meaningless variables:`kw_min_min`,`kw_avg_min`,`kw_min_avg`,`is_weekend`
-Also some highly correlated variables will be removed too,then we will get a new train set and test set.  
+From the correlation plot,I decided to remove some meaningless variables:`is_weekend`,variables start with "LDA".
+Also some highly correlated variables will be removed too,like variables start with"kw",then we will get a new train set and test set.  
 
 ```{r}
+#Remove meaningless variabls
 train_data <- train_data %>% select(!starts_with("LDA"),-is_weekend)
 test_data <- test_data %>% select(!starts_with("LDA"),-is_weekend)
 train_data <- train_data %>% select(!starts_with('kw'))
 test_data <- train_data %>% select(!starts_with('kw'))
 ```
 
+
 # First Model
+
 ## Tree based model chosen using leave one out cross validation  
 
 ```{r}
@@ -132,5 +140,5 @@ compare <- rbind(postResample(pred.tree,test_data$shares),postResample(pred.boos
 rownames(compare)<-c("Tree method","Boosted method")
 compare
 ```
-From the result we can see the boosted method generates smaller RMSE which is the same as we expected.
+From the result we can see the boosted method generates smaller RMSE which is the same as we expected.The boosted method tend to have a better prediction than the tree based method.
 
