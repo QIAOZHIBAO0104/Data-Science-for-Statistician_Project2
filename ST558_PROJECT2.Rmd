@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, include=TRUE, eval=FALSE, echo=FALSE}
-rmarkdown::render("ST558_PROJECT2.Rmd", output_file= "README.md")
+rmarkdown::render("README.Rmd", output_file= "README.md")
 ```
 # Introduction  
 ## Describe the data  
@@ -35,7 +35,7 @@ I then utilized the caret package to create two models.Tree-based model chosen u
 As our study intention is to predict the popularity of an article, so we choose the shares as the response variable.After plotting the correlations between variables, we removed some high related predictive variables.
 The two models were fitted by remaining variables in the training set. 
 
-```{r}
+```{r,message=FALSE}
 # Load all libraries
 library(tidyverse)
 library(ggplot2)
@@ -58,13 +58,12 @@ params$weekday
 data <- news_pop%>% select(!starts_with('weekday_is'),params$weekday)
 # Check if we have missing values, answer is 'No'
 sum(is.na(data))
-```
-```{r}
 data <-data %>% filter(data[,53]==1) %>%select(-params$weekday)
-data
 ```
+
 As there is no missing value in our Monday data, we will step to split data.
 By using sample(), with 70% of the data goes to the training set (4,662 observations, Mon_train) and 30% goes to the test set (1,999 observations, Mon_test).
+
 ```{r}
 # Split Monday data,70% for training set and 30% for test set
 set.seed(1)
@@ -75,7 +74,8 @@ test_data <- data[test,]
 ```
 # Data Summarizations
 ## Predictor Variables   
-I used the summary() function to calculate summary statistics for each of the quantitative variables in Mon_data.
+I used the `summary()` function to calculate summary statistics for each of the quantitative variables in data.I divided the data into trunks to make plots easier to compare.
+
 ```{r}
 summary(train_data)
 correlation1 <- cor(train_data[,c(1:10,52)])
@@ -95,6 +95,7 @@ corrplot(correlation5,type='upper',tl.pos = 'lt')
 corrplot(correlation5,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
+Unfortunately I did not find any variables are strongly related with the response,so my plan is remove some highly correlated predictive variables.
 From the correlation plot,I decided to remove some meaningless variables:`is_weekend`,variables start with "LDA".
 Also some highly correlated variables will be removed too,like variables start with"kw",then we will get a new train set and test set.  
 
@@ -108,7 +109,6 @@ test_data <- train_data %>% select(!starts_with('kw'))
 
 
 # First Model
-
 ## Tree based model chosen using leave one out cross validation  
 
 ```{r}
@@ -131,6 +131,8 @@ boosted.method <- train(shares ~.,data = train_data,method = 'gbm',
 boosted.method$results
 boosted.method$bestTune
 ```
+## Compare RMSE 
+We will make predictions using beset model fits and test set to compare the RMSE of the two models.We will choose the model with a smaller RMSE as our optimal model.
 
 ```{r}
 # predict values on test set and compare RMSE for two models
@@ -140,5 +142,6 @@ compare <- rbind(postResample(pred.tree,test_data$shares),postResample(pred.boos
 rownames(compare)<-c("Tree method","Boosted method")
 compare
 ```
-From the result we can see the boosted method generates smaller RMSE which is the same as we expected.The boosted method tend to have a better prediction than the tree based method.
+We generates two very similar RMSE,the smaller is preferred.
+In this case,we can see the boosted method generates smaller RMSE which is the same as we expected.The boosted method tend to have a better prediction than the tree based method.
 

@@ -36,6 +36,12 @@ validation.Boosted tree model chosen using cross-validation.
 
 ## Description of the Used Data
 
+As our study intention is to predict the popularity of an article, so we
+choose the shares as the response variable.After plotting the
+correlations between variables, we removed some high related predictive
+variables. The two models were fitted by remaining variables in the
+training set.
+
 ``` r
 # Load all libraries
 library(tidyverse)
@@ -63,17 +69,22 @@ news_pop <- read_csv('./OnlineNewsPopularity.csv') %>% select(-`url`,-`timedelta
     ## See spec(...) for full column specifications.
 
 ``` r
+params$weekday
+```
+
+    ## [1] "weekday_is_monday"
+
+``` r
 # First to see Monday data
-Mon_data <- news_pop%>% filter(weekday_is_monday==1)
-Mon_data <- Mon_data %>% select(!starts_with('weekday_is'))
+data <- news_pop%>% select(!starts_with('weekday_is'),params$weekday)
 # Check if we have missing values, answer is 'No'
-sum(is.na(Mon_data))
+sum(is.na(data))
 ```
 
     ## [1] 0
 
 ``` r
-Mon_data
+data <-data %>% filter(data[,53]==1) %>%select(-params$weekday)
 ```
 
 As there is no missing value in our Monday data, we will step to split
@@ -84,18 +95,19 @@ observations, Mon\_test).
 ``` r
 # Split Monday data,70% for training set and 30% for test set
 set.seed(1)
-train <- sample(1:nrow(Mon_data),size = nrow(Mon_data)*0.7)
-test <- dplyr::setdiff(1:nrow(Mon_data),train)
-train_data <-Mon_data[train,]
-test_data <- Mon_data[test,]
+train <- sample(1:nrow(data),size = nrow(data)*0.7)
+test <- dplyr::setdiff(1:nrow(data),train)
+train_data <-data[train,]
+test_data <- data[test,]
 ```
 
 # Data Summarizations
 
 ## Predictor Variables
 
-I used the summary() function to calculate summary statistics for each
-of the quantitative variables in Mon\_data.
+I used the `summary()` function to calculate summary statistics for each
+of the quantitative variables in data.I divided the data into trunks to
+make plots easier to compare.
 
 ``` r
 summary(train_data)
@@ -206,7 +218,7 @@ corrplot(correlation1,type='upper',tl.pos = 'lt')
 corrplot(correlation1,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](weekday_is_monday_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](weekday_is_monday_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 ``` r
 correlation2 <- cor(train_data[,c(11:20,52)])
@@ -214,7 +226,7 @@ corrplot(correlation2,type='upper',tl.pos = 'lt')
 corrplot(correlation2,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](weekday_is_monday_files/figure-gfm/unnamed-chunk-17-2.png)<!-- -->
+![](weekday_is_monday_files/figure-gfm/unnamed-chunk-7-2.png)<!-- -->
 
 ``` r
 correlation3 <- cor(train_data[,c(21:30,52)])
@@ -227,7 +239,7 @@ corrplot(correlation3,type='upper',tl.pos = 'lt')
 corrplot(correlation3,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](weekday_is_monday_files/figure-gfm/unnamed-chunk-17-3.png)<!-- -->
+![](weekday_is_monday_files/figure-gfm/unnamed-chunk-7-3.png)<!-- -->
 
 ``` r
 correlation4 <- cor(train_data[,c(31:40,52)])
@@ -235,7 +247,7 @@ corrplot(correlation4,type='upper',tl.pos = 'lt')
 corrplot(correlation4,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](weekday_is_monday_files/figure-gfm/unnamed-chunk-17-4.png)<!-- -->
+![](weekday_is_monday_files/figure-gfm/unnamed-chunk-7-4.png)<!-- -->
 
 ``` r
 correlation5 <- cor(train_data[,c(41:51,52)])
@@ -243,13 +255,17 @@ corrplot(correlation5,type='upper',tl.pos = 'lt')
 corrplot(correlation5,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](weekday_is_monday_files/figure-gfm/unnamed-chunk-17-5.png)<!-- -->
-From the correlation plot,I decided to remove some meaningless
-variables:`kw_min_min`,`kw_avg_min`,`kw_min_avg`,`is_weekend` Also some
-highly correlated variables will be removed too,then we will get a new
-train set and test set.
+![](weekday_is_monday_files/figure-gfm/unnamed-chunk-7-5.png)<!-- -->
+
+Unfortunately I did not find any variables are strongly related with the
+response,so my plan is remove some highly correlated predictive
+variables. From the correlation plot,I decided to remove some
+meaningless variables:`is_weekend`,variables start with “LDA”. Also some
+highly correlated variables will be removed too,like variables start
+with“kw”,then we will get a new train set and test set.
 
 ``` r
+#Remove meaningless variables
 train_data <- train_data %>% select(!starts_with("LDA"),-is_weekend)
 test_data <- test_data %>% select(!starts_with("LDA"),-is_weekend)
 train_data <- train_data %>% select(!starts_with('kw'))
@@ -283,6 +299,12 @@ boosted.method$results
 boosted.method$bestTune
 ```
 
+## Compare RMSE
+
+We will make predictions using beset model fits and test set to compare
+the RMSE of the two models.We will choose the model with a smaller RMSE
+as our optimal model.
+
 ``` r
 # predict values on test set and compare RMSE for two models
 pred.tree <- predict(tree.method,test_data)
@@ -296,5 +318,7 @@ compare
     ## Tree method    13264.25        NA 3685.593
     ## Boosted method 12372.45 0.1711358 3569.803
 
-From the result we can see the boosted method generates smaller RMSE
-which is the same as we expected.
+We generates two very similar RMSE,the smaller is preferred. In this
+case,we can see the boosted method generates smaller RMSE which is the
+same as we expected.The boosted method tend to have a better prediction
+than the tree based method.

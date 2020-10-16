@@ -45,73 +45,12 @@ training set.
 ``` r
 # Load all libraries
 library(tidyverse)
-```
-
-    ## ── Attaching packages ────────────────────────────────────────────────────── tidyverse 1.3.0 ──
-
-    ## ✓ ggplot2 3.3.2     ✓ purrr   0.3.4
-    ## ✓ tibble  3.0.3     ✓ dplyr   1.0.2
-    ## ✓ tidyr   1.1.2     ✓ stringr 1.4.0
-    ## ✓ readr   1.3.1     ✓ forcats 0.5.0
-
-    ## ── Conflicts ───────────────────────────────────────────────────────── tidyverse_conflicts() ──
-    ## x dplyr::filter() masks stats::filter()
-    ## x dplyr::lag()    masks stats::lag()
-
-``` r
 library(ggplot2)
 library(randomForest)
-```
-
-    ## randomForest 4.6-14
-
-    ## Type rfNews() to see new features/changes/bug fixes.
-
-    ## 
-    ## Attaching package: 'randomForest'
-
-    ## The following object is masked from 'package:dplyr':
-    ## 
-    ##     combine
-
-    ## The following object is masked from 'package:ggplot2':
-    ## 
-    ##     margin
-
-``` r
 library(caret)
-```
-
-    ## Loading required package: lattice
-
-    ## 
-    ## Attaching package: 'caret'
-
-    ## The following object is masked from 'package:purrr':
-    ## 
-    ##     lift
-
-``` r
 library(tree)
-```
-
-    ## Registered S3 method overwritten by 'tree':
-    ##   method     from
-    ##   print.tree cli
-
-``` r
 library(gbm)
-```
-
-    ## Loaded gbm 2.1.8
-
-``` r
 library(corrplot)
-```
-
-    ## corrplot 0.84 loaded
-
-``` r
 library(e1071)
 set.seed(1)
 ```
@@ -146,43 +85,7 @@ sum(is.na(data))
 
 ``` r
 data <-data %>% filter(data[,53]==1) %>%select(-params$weekday)
-data
 ```
-
-    ## # A tibble: 6,661 x 52
-    ##    n_tokens_title n_tokens_content n_unique_tokens n_non_stop_words
-    ##             <dbl>            <dbl>           <dbl>            <dbl>
-    ##  1             12              219           0.664             1.00
-    ##  2              9              255           0.605             1.00
-    ##  3              9              211           0.575             1.00
-    ##  4              9              531           0.504             1.00
-    ##  5             13             1072           0.416             1.00
-    ##  6             10              370           0.560             1.00
-    ##  7              8              960           0.418             1.00
-    ##  8             12              989           0.434             1.00
-    ##  9             11               97           0.670             1.00
-    ## 10             10              231           0.636             1.00
-    ## # … with 6,651 more rows, and 48 more variables:
-    ## #   n_non_stop_unique_tokens <dbl>, num_hrefs <dbl>, num_self_hrefs <dbl>,
-    ## #   num_imgs <dbl>, num_videos <dbl>, average_token_length <dbl>,
-    ## #   num_keywords <dbl>, data_channel_is_lifestyle <dbl>,
-    ## #   data_channel_is_entertainment <dbl>, data_channel_is_bus <dbl>,
-    ## #   data_channel_is_socmed <dbl>, data_channel_is_tech <dbl>,
-    ## #   data_channel_is_world <dbl>, kw_min_min <dbl>, kw_max_min <dbl>,
-    ## #   kw_avg_min <dbl>, kw_min_max <dbl>, kw_max_max <dbl>, kw_avg_max <dbl>,
-    ## #   kw_min_avg <dbl>, kw_max_avg <dbl>, kw_avg_avg <dbl>,
-    ## #   self_reference_min_shares <dbl>, self_reference_max_shares <dbl>,
-    ## #   self_reference_avg_sharess <dbl>, is_weekend <dbl>, LDA_00 <dbl>,
-    ## #   LDA_01 <dbl>, LDA_02 <dbl>, LDA_03 <dbl>, LDA_04 <dbl>,
-    ## #   global_subjectivity <dbl>, global_sentiment_polarity <dbl>,
-    ## #   global_rate_positive_words <dbl>, global_rate_negative_words <dbl>,
-    ## #   rate_positive_words <dbl>, rate_negative_words <dbl>,
-    ## #   avg_positive_polarity <dbl>, min_positive_polarity <dbl>,
-    ## #   max_positive_polarity <dbl>, avg_negative_polarity <dbl>,
-    ## #   min_negative_polarity <dbl>, max_negative_polarity <dbl>,
-    ## #   title_subjectivity <dbl>, title_sentiment_polarity <dbl>,
-    ## #   abs_title_subjectivity <dbl>, abs_title_sentiment_polarity <dbl>,
-    ## #   shares <dbl>
 
 As there is no missing value in our Monday data, we will step to split
 data. By using sample(), with 70% of the data goes to the training set
@@ -202,8 +105,9 @@ test_data <- data[test,]
 
 ## Predictor Variables
 
-I used the summary() function to calculate summary statistics for each
-of the quantitative variables in Mon\_data.
+I used the `summary()` function to calculate summary statistics for each
+of the quantitative variables in data.I divided the data into trunks to
+make plots easier to compare.
 
 ``` r
 summary(train_data)
@@ -328,7 +232,7 @@ corrplot(correlation1,type='upper',tl.pos = 'lt')
 corrplot(correlation1,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ``` r
 correlation2 <- cor(train_data[,c(11:20,52)])
@@ -336,7 +240,7 @@ corrplot(correlation2,type='upper',tl.pos = 'lt')
 corrplot(correlation2,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-7-2.png)<!-- -->
+![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-6-2.png)<!-- -->
 
 ``` r
 correlation3 <- cor(train_data[,c(21:30,52)])
@@ -349,7 +253,7 @@ corrplot(correlation3,type='upper',tl.pos = 'lt')
 corrplot(correlation3,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-7-3.png)<!-- -->
+![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-6-3.png)<!-- -->
 
 ``` r
 correlation4 <- cor(train_data[,c(31:40,52)])
@@ -357,7 +261,7 @@ corrplot(correlation4,type='upper',tl.pos = 'lt')
 corrplot(correlation4,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-7-4.png)<!-- -->
+![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-6-4.png)<!-- -->
 
 ``` r
 correlation5 <- cor(train_data[,c(41:51,52)])
@@ -365,11 +269,12 @@ corrplot(correlation5,type='upper',tl.pos = 'lt')
 corrplot(correlation5,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-7-5.png)<!-- -->
-
-From the correlation plot,I decided to remove some meaningless
-variables:`is_weekend`,variables start with “LDA”. Also some highly
-correlated variables will be removed too,like variables start
+![](ST558_PROJECT2_files/figure-gfm/unnamed-chunk-6-5.png)<!-- -->
+Unfortunately I did not find any variables are strongly related with the
+response,so my plan is remove some highly correlated predictive
+variables. From the correlation plot,I decided to remove some
+meaningless variables:`is_weekend`,variables start with “LDA”. Also some
+highly correlated variables will be removed too,like variables start
 with“kw”,then we will get a new train set and test set.
 
 ``` r
@@ -445,6 +350,12 @@ boosted.method$bestTune
     ##   n.trees interaction.depth shrinkage n.minobsinnode
     ## 4      50                 2       0.1             10
 
+## Compare RMSE
+
+We will make predictions using beset model fits and test set to compare
+the RMSE of the two models.We will choose the model with a smaller RMSE
+as our optimal model.
+
 ``` r
 # predict values on test set and compare RMSE for two models
 pred.tree <- predict(tree.method,test_data)
@@ -458,6 +369,7 @@ compare
     ## Tree method    13264.25        NA 3685.593
     ## Boosted method 12372.45 0.1711358 3569.803
 
-From the result we can see the boosted method generates smaller RMSE
-which is the same as we expected.The boosted method tend to have a
-better prediction than the tree based method.
+We generates two very similar RMSE,the smaller is preferred. In this
+case,we can see the boosted method generates smaller RMSE which is the
+same as we expected.The boosted method tend to have a better prediction
+than the tree based method.
