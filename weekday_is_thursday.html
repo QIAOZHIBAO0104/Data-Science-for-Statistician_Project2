@@ -794,22 +794,167 @@ body {
 <span id="cb21-3"><a href="#cb21-3"></a>                      <span class="dt">trControl =</span> <span class="kw">trainControl</span>(<span class="dt">method =</span> <span class="st">&#39;repeatedcv&#39;</span>, <span class="dt">number=</span><span class="dv">5</span>,<span class="dt">repeats =</span><span class="dv">2</span>),</span>
 <span id="cb21-4"><a href="#cb21-4"></a>                      <span class="dt">preProcess =</span> <span class="kw">c</span>(<span class="st">&quot;center&quot;</span>,<span class="st">&quot;scale&quot;</span>),</span>
 <span id="cb21-5"><a href="#cb21-5"></a>                      <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
-<span id="cb21-6"><a href="#cb21-6"></a></span>
-<span id="cb21-7"><a href="#cb21-7"></a>boosted.method<span class="op">$</span>results</span>
-<span id="cb21-8"><a href="#cb21-8"></a>boosted.method<span class="op">$</span>bestTune</span></code></pre></div>
-<h2 id="compare-rmse">Compare RMSE</h2>
-<p>We will make predictions using beset model fits and test set to compare the RMSE of the two models.We will choose the model with a smaller RMSE as our optimal model.</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1"></a><span class="co"># predict values on test set and compare RMSE for two models</span></span>
-<span id="cb22-2"><a href="#cb22-2"></a>pred.tree &lt;-<span class="st"> </span><span class="kw">predict</span>(tree.method,test_data)</span>
-<span id="cb22-3"><a href="#cb22-3"></a>pred.boost &lt;-<span class="st"> </span><span class="kw">predict</span>(boosted.method,test_data)</span>
-<span id="cb22-4"><a href="#cb22-4"></a>compare &lt;-<span class="st"> </span><span class="kw">rbind</span>(<span class="kw">postResample</span>(pred.tree,test_data<span class="op">$</span>shares),<span class="kw">postResample</span>(pred.boost,test_data<span class="op">$</span>shares))</span>
-<span id="cb22-5"><a href="#cb22-5"></a><span class="kw">rownames</span>(compare)&lt;-<span class="kw">c</span>(<span class="st">&quot;Tree method&quot;</span>,<span class="st">&quot;Boosted method&quot;</span>)</span>
-<span id="cb22-6"><a href="#cb22-6"></a>compare</span></code></pre></div>
-<pre><code>##                    RMSE   Rsquared      MAE
-## Tree method    9386.627         NA 3004.182
-## Boosted method 9189.113 0.04578476 2922.425
+<span id="cb21-6"><a href="#cb21-6"></a>boosted.method<span class="op">$</span>results</span>
+<span id="cb21-7"><a href="#cb21-7"></a>boosted.method<span class="op">$</span>bestTune</span></code></pre></div>
+<h1 id="second-analysis">Second Analysis</h1>
+<h2 id="linear-model">Linear model</h2>
+<p>As we already removed some predictor variables based on collinearity,to simplify the variable selection we just pick some significant variables from the linear fit model,then pick a model from the candidate models.</p>
+<p>We picked <code>num_hrefs</code>, <code>tt{average_token_length</code>, <code>data_channel_is_lifestyle</code>, <code>data_channel_is_entertainment</code>, <code>data_channel_is_bus</code>, <code>data_channel_is_socmed</code>,<code>data_channel_is_tech</code>,<code>data_channel_is_world</code>,<code>self_reference_min_shares</code>.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1"></a><span class="co"># fit a linear model</span></span>
+<span id="cb22-2"><a href="#cb22-2"></a>lm.fit &lt;-<span class="st"> </span><span class="kw">lm</span>(shares <span class="op">~</span>., <span class="dt">data=</span>train_data)</span>
+<span id="cb22-3"><a href="#cb22-3"></a><span class="kw">summary</span>(lm.fit)</span></code></pre></div>
+<pre><code>## 
+## Call:
+## lm(formula = shares ~ ., data = train_data)
+## 
+## Residuals:
+##    Min     1Q Median     3Q    Max 
+## -10177  -2250  -1276   -104 291701 
+## 
+## Coefficients: (1 not defined because of singularities)
+##                                 Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)                    2.908e+03  1.283e+03   2.266 0.023494 *  
+## n_tokens_title                 1.523e+02  6.415e+01   2.374 0.017611 *  
+## n_tokens_content              -7.924e-01  5.308e-01  -1.493 0.135550    
+## n_unique_tokens                5.676e+03  4.355e+03   1.303 0.192522    
+## n_non_stop_words               3.931e+01  3.817e+03   0.010 0.991784    
+## n_non_stop_unique_tokens      -3.891e+03  3.682e+03  -1.057 0.290697    
+## num_hrefs                      4.909e+01  1.608e+01   3.053 0.002280 ** 
+## num_self_hrefs                -9.552e+00  4.613e+01  -0.207 0.835952    
+## num_imgs                       3.196e+01  2.043e+01   1.565 0.117721    
+## num_videos                     2.264e+01  3.619e+01   0.626 0.531542    
+## average_token_length          -8.632e+02  5.688e+02  -1.517 0.129218    
+## num_keywords                  -7.984e+00  7.203e+01  -0.111 0.911746    
+## data_channel_is_lifestyle     -7.916e+02  7.145e+02  -1.108 0.267957    
+## data_channel_is_entertainment -1.851e+03  5.040e+02  -3.673 0.000242 ***
+## data_channel_is_bus           -1.412e+03  5.428e+02  -2.602 0.009286 ** 
+## data_channel_is_socmed        -1.477e+03  6.838e+02  -2.160 0.030843 *  
+## data_channel_is_tech          -1.387e+03  5.434e+02  -2.553 0.010706 *  
+## data_channel_is_world         -1.532e+03  5.432e+02  -2.820 0.004823 ** 
+## self_reference_min_shares      1.202e-02  1.799e-02   0.668 0.504010    
+## self_reference_max_shares      1.491e-02  1.100e-02   1.356 0.175307    
+## self_reference_avg_sharess    -1.734e-02  2.630e-02  -0.659 0.509726    
+## global_subjectivity            5.666e+03  1.946e+03   2.911 0.003618 ** 
+## global_sentiment_polarity     -4.174e+03  3.815e+03  -1.094 0.273895    
+## global_rate_positive_words     2.105e+03  1.652e+04   0.127 0.898613    
+## global_rate_negative_words    -1.608e+04  3.189e+04  -0.504 0.614133    
+## rate_positive_words            1.435e+03  2.524e+03   0.569 0.569516    
+## rate_negative_words                   NA         NA      NA       NA    
+## avg_positive_polarity         -2.827e+03  3.113e+03  -0.908 0.363846    
+## min_positive_polarity          4.868e+02  2.628e+03   0.185 0.853039    
+## max_positive_polarity          5.207e+02  9.794e+02   0.532 0.594963    
+## avg_negative_polarity          2.435e+03  2.933e+03   0.830 0.406602    
+## min_negative_polarity         -1.726e+03  1.048e+03  -1.646 0.099820 .  
+## max_negative_polarity         -4.186e+03  2.430e+03  -1.723 0.084950 .  
+## title_subjectivity             3.697e+01  6.035e+02   0.061 0.951157    
+## title_sentiment_polarity      -3.120e+02  5.745e+02  -0.543 0.587132    
+## abs_title_subjectivity         1.465e+02  8.230e+02   0.178 0.858698    
+## abs_title_sentiment_polarity   1.333e+03  9.122e+02   1.461 0.144148    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 9306 on 5050 degrees of freedom
+## Multiple R-squared:  0.02413,    Adjusted R-squared:  0.01736 
+## F-statistic: 3.567 on 35 and 5050 DF,  p-value: 7.721e-12
 </code></pre>
-<p>We generate two very similar RMSE,the smaller is preferred. In this case,we can see the boosted method generates smaller RMSE which is the same as we expected.The boosted method tend to have a better prediction than the tree based method.</p>
+<p>Then we will fit some candidate models to select.</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1"></a><span class="co"># Candidate models</span></span>
+<span id="cb24-2"><a href="#cb24-2"></a>fit1 &lt;-<span class="st"> </span><span class="kw">train</span>(shares <span class="op">~</span><span class="st"> </span>num_hrefs, train_data,</span>
+<span id="cb24-3"><a href="#cb24-3"></a>             <span class="dt">method=</span><span class="st">&#39;lm&#39;</span>,</span>
+<span id="cb24-4"><a href="#cb24-4"></a>             <span class="dt">trControl =</span> <span class="kw">trainControl</span>(<span class="dt">method =</span> <span class="st">&#39;cv&#39;</span>,<span class="dt">number=</span><span class="dv">10</span>))</span>
+<span id="cb24-5"><a href="#cb24-5"></a>fit1<span class="op">$</span>results<span class="op">$</span>RMSE</span></code></pre></div>
+<pre><code>## [1] 8530.966
+</code></pre>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1"></a>fit2 &lt;-<span class="st"> </span><span class="kw">train</span>(shares <span class="op">~</span><span class="st"> </span>num_hrefs<span class="op">+</span>average_token_length, train_data,</span>
+<span id="cb26-2"><a href="#cb26-2"></a>             <span class="dt">method=</span><span class="st">&#39;lm&#39;</span>,</span>
+<span id="cb26-3"><a href="#cb26-3"></a>             <span class="dt">trControl =</span> <span class="kw">trainControl</span>(<span class="dt">method =</span> <span class="st">&#39;cv&#39;</span>,<span class="dt">number=</span><span class="dv">10</span>))</span>
+<span id="cb26-4"><a href="#cb26-4"></a>fit2<span class="op">$</span>results<span class="op">$</span>RMSE</span></code></pre></div>
+<pre><code>## [1] 8241.744
+</code></pre>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1"></a>fit3 &lt;-<span class="st"> </span><span class="kw">train</span>(shares <span class="op">~</span><span class="st"> </span>num_hrefs<span class="op">+</span>average_token_length</span>
+<span id="cb28-2"><a href="#cb28-2"></a>              <span class="op">+</span>data_channel_is_lifestyle, train_data,</span>
+<span id="cb28-3"><a href="#cb28-3"></a>             <span class="dt">method=</span><span class="st">&#39;lm&#39;</span>,</span>
+<span id="cb28-4"><a href="#cb28-4"></a>             <span class="dt">trControl =</span> <span class="kw">trainControl</span>(<span class="dt">method =</span> <span class="st">&#39;cv&#39;</span>,<span class="dt">number=</span><span class="dv">10</span>))</span>
+<span id="cb28-5"><a href="#cb28-5"></a>fit3<span class="op">$</span>results<span class="op">$</span>RMSE</span></code></pre></div>
+<pre><code>## [1] 8440.849
+</code></pre>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1"></a>fit4 &lt;-<span class="st"> </span><span class="kw">train</span>(shares <span class="op">~</span><span class="st"> </span>num_hrefs<span class="op">+</span>average_token_length</span>
+<span id="cb30-2"><a href="#cb30-2"></a>              <span class="op">+</span>data_channel_is_lifestyle<span class="op">+</span>data_channel_is_entertainment, train_data,</span>
+<span id="cb30-3"><a href="#cb30-3"></a>             <span class="dt">method=</span><span class="st">&#39;lm&#39;</span>,</span>
+<span id="cb30-4"><a href="#cb30-4"></a>             <span class="dt">trControl =</span> <span class="kw">trainControl</span>(<span class="dt">method =</span> <span class="st">&#39;cv&#39;</span>,<span class="dt">number=</span><span class="dv">10</span>))</span>
+<span id="cb30-5"><a href="#cb30-5"></a>fit4<span class="op">$</span>results<span class="op">$</span>RMSE</span></code></pre></div>
+<pre><code>## [1] 8700.089
+</code></pre>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1"></a>fit5 &lt;-<span class="st"> </span><span class="kw">train</span>(shares <span class="op">~</span><span class="st"> </span>num_hrefs<span class="op">+</span>average_token_length</span>
+<span id="cb32-2"><a href="#cb32-2"></a>              <span class="op">+</span>data_channel_is_lifestyle<span class="op">+</span>data_channel_is_entertainment</span>
+<span id="cb32-3"><a href="#cb32-3"></a>              <span class="op">+</span>data_channel_is_bus, train_data,</span>
+<span id="cb32-4"><a href="#cb32-4"></a>             <span class="dt">method=</span><span class="st">&#39;lm&#39;</span>,</span>
+<span id="cb32-5"><a href="#cb32-5"></a>             <span class="dt">trControl =</span> <span class="kw">trainControl</span>(<span class="dt">method =</span> <span class="st">&#39;cv&#39;</span>,<span class="dt">number=</span><span class="dv">10</span>))</span>
+<span id="cb32-6"><a href="#cb32-6"></a>fit5<span class="op">$</span>results<span class="op">$</span>RMSE</span></code></pre></div>
+<pre><code>## [1] 8728.636
+</code></pre>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1"></a>fit6 &lt;-<span class="st"> </span><span class="kw">train</span>(shares <span class="op">~</span><span class="st"> </span>num_hrefs<span class="op">+</span>average_token_length</span>
+<span id="cb34-2"><a href="#cb34-2"></a>              <span class="op">+</span>data_channel_is_lifestyle<span class="op">+</span>data_channel_is_entertainment</span>
+<span id="cb34-3"><a href="#cb34-3"></a>              <span class="op">+</span>data_channel_is_bus<span class="op">+</span>data_channel_is_socmed, train_data,</span>
+<span id="cb34-4"><a href="#cb34-4"></a>             <span class="dt">method=</span><span class="st">&#39;lm&#39;</span>,</span>
+<span id="cb34-5"><a href="#cb34-5"></a>             <span class="dt">trControl =</span> <span class="kw">trainControl</span>(<span class="dt">method =</span> <span class="st">&#39;cv&#39;</span>,<span class="dt">number=</span><span class="dv">10</span>))</span>
+<span id="cb34-6"><a href="#cb34-6"></a>fit6<span class="op">$</span>results<span class="op">$</span>RMSE</span></code></pre></div>
+<pre><code>## [1] 8404.036
+</code></pre>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1"></a>fit7&lt;-<span class="st"> </span><span class="kw">train</span>(shares <span class="op">~</span><span class="st"> </span>num_hrefs<span class="op">+</span>average_token_length</span>
+<span id="cb36-2"><a href="#cb36-2"></a>              <span class="op">+</span>data_channel_is_lifestyle<span class="op">+</span>data_channel_is_entertainment</span>
+<span id="cb36-3"><a href="#cb36-3"></a>              <span class="op">+</span>data_channel_is_bus<span class="op">+</span>data_channel_is_socmed<span class="op">+</span>data_channel_is_tech, train_data,</span>
+<span id="cb36-4"><a href="#cb36-4"></a>             <span class="dt">method=</span><span class="st">&#39;lm&#39;</span>,</span>
+<span id="cb36-5"><a href="#cb36-5"></a>             <span class="dt">trControl =</span> <span class="kw">trainControl</span>(<span class="dt">method =</span> <span class="st">&#39;cv&#39;</span>,<span class="dt">number=</span><span class="dv">10</span>))</span>
+<span id="cb36-6"><a href="#cb36-6"></a>fit7<span class="op">$</span>results<span class="op">$</span>RMSE</span></code></pre></div>
+<pre><code>## [1] 8307.333
+</code></pre>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1"></a>fit8 &lt;-<span class="st"> </span><span class="kw">train</span>(shares <span class="op">~</span><span class="st"> </span>num_hrefs<span class="op">+</span>average_token_length</span>
+<span id="cb38-2"><a href="#cb38-2"></a>              <span class="op">+</span>data_channel_is_lifestyle<span class="op">+</span>data_channel_is_entertainment</span>
+<span id="cb38-3"><a href="#cb38-3"></a>              <span class="op">+</span>data_channel_is_bus<span class="op">+</span>data_channel_is_socmed<span class="op">+</span>data_channel_is_tech<span class="op">+</span></span>
+<span id="cb38-4"><a href="#cb38-4"></a><span class="st">              </span>data_channel_is_world,</span>
+<span id="cb38-5"><a href="#cb38-5"></a>              train_data,<span class="dt">method=</span><span class="st">&#39;lm&#39;</span>,</span>
+<span id="cb38-6"><a href="#cb38-6"></a>             <span class="dt">trControl =</span> <span class="kw">trainControl</span>(<span class="dt">method =</span> <span class="st">&#39;cv&#39;</span>,<span class="dt">number=</span><span class="dv">10</span>))</span>
+<span id="cb38-7"><a href="#cb38-7"></a>fit8<span class="op">$</span>results<span class="op">$</span>RMSE</span></code></pre></div>
+<pre><code>## [1] 8621.179
+</code></pre>
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1"></a>fit9 &lt;-<span class="st"> </span><span class="kw">train</span>(shares <span class="op">~</span><span class="st"> </span>num_hrefs<span class="op">+</span>average_token_length</span>
+<span id="cb40-2"><a href="#cb40-2"></a>              <span class="op">+</span>data_channel_is_lifestyle<span class="op">+</span>data_channel_is_entertainment</span>
+<span id="cb40-3"><a href="#cb40-3"></a>              <span class="op">+</span>data_channel_is_bus<span class="op">+</span>data_channel_is_socmed<span class="op">+</span>data_channel_is_tech<span class="op">+</span></span>
+<span id="cb40-4"><a href="#cb40-4"></a><span class="st">              </span>data_channel_is_world<span class="op">+</span>self_reference_min_shares,</span>
+<span id="cb40-5"><a href="#cb40-5"></a>              train_data,<span class="dt">method=</span><span class="st">&#39;lm&#39;</span>,</span>
+<span id="cb40-6"><a href="#cb40-6"></a>             <span class="dt">trControl =</span> <span class="kw">trainControl</span>(<span class="dt">method =</span> <span class="st">&#39;cv&#39;</span>,<span class="dt">number=</span><span class="dv">10</span>))</span>
+<span id="cb40-7"><a href="#cb40-7"></a>fit9<span class="op">$</span>results<span class="op">$</span>RMSE</span></code></pre></div>
+<pre><code>## [1] 8051.47
+</code></pre>
+<p>Model fit7 has the lowest training RMSE with 7 variables, so we pick this model as our optimal model for further evaluation on test set.</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1"></a><span class="co"># final linear model</span></span>
+<span id="cb42-2"><a href="#cb42-2"></a>lm.fit.final &lt;-<span class="st"> </span><span class="kw">as.formula</span>(shares <span class="op">~</span><span class="st"> </span>num_hrefs<span class="op">+</span>average_token_length</span>
+<span id="cb42-3"><a href="#cb42-3"></a>              <span class="op">+</span>data_channel_is_lifestyle<span class="op">+</span>data_channel_is_entertainment</span>
+<span id="cb42-4"><a href="#cb42-4"></a>              <span class="op">+</span>data_channel_is_bus<span class="op">+</span>data_channel_is_socmed<span class="op">+</span>data_channel_is_tech)</span></code></pre></div>
+<p>Now we will calculate the test RMSE on test set for the picked linear model.</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1"></a>final.fit &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="kw">as.formula</span>(shares <span class="op">~</span><span class="st"> </span>num_hrefs<span class="op">+</span>average_token_length</span>
+<span id="cb43-2"><a href="#cb43-2"></a>              <span class="op">+</span>data_channel_is_lifestyle<span class="op">+</span>data_channel_is_entertainment</span>
+<span id="cb43-3"><a href="#cb43-3"></a>              <span class="op">+</span>data_channel_is_bus<span class="op">+</span>data_channel_is_socmed<span class="op">+</span>data_channel_is_tech),</span>
+<span id="cb43-4"><a href="#cb43-4"></a>              test_data,<span class="dt">method=</span><span class="st">&#39;lm&#39;</span>,</span>
+<span id="cb43-5"><a href="#cb43-5"></a>              <span class="dt">trControl =</span> <span class="kw">trainControl</span>(<span class="dt">method =</span> <span class="st">&#39;cv&#39;</span>,<span class="dt">number=</span><span class="dv">5</span>))</span>
+<span id="cb43-6"><a href="#cb43-6"></a>final.fit<span class="op">$</span>results<span class="op">$</span>RMSE</span></code></pre></div>
+<pre><code>## [1] 8898.412
+</code></pre>
+<h2 id="compare-rmse">Compare RMSE</h2>
+<p>We will make predictions using beset model fits and test set to compare the RMSE of the three models.We will choose the model with a smaller RMSE as our final optimal model.</p>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1"></a><span class="co"># predict values on test set and compare RMSE for two models</span></span>
+<span id="cb45-2"><a href="#cb45-2"></a>pred.tree &lt;-<span class="st"> </span><span class="kw">predict</span>(tree.method,test_data)</span>
+<span id="cb45-3"><a href="#cb45-3"></a>pred.boost &lt;-<span class="st"> </span><span class="kw">predict</span>(boosted.method,test_data)</span>
+<span id="cb45-4"><a href="#cb45-4"></a>tree.rmse &lt;-<span class="st"> </span><span class="kw">sqrt</span>(<span class="kw">mean</span>((pred.tree<span class="op">-</span>test_data<span class="op">$</span>shares)<span class="op">^</span><span class="dv">2</span>))</span>
+<span id="cb45-5"><a href="#cb45-5"></a>boost.rmse &lt;-<span class="st"> </span><span class="kw">sqrt</span>(<span class="kw">mean</span>((pred.boost<span class="op">-</span>test_data<span class="op">$</span>shares)<span class="op">^</span><span class="dv">2</span>))</span>
+<span id="cb45-6"><a href="#cb45-6"></a>compare &lt;-<span class="st"> </span><span class="kw">cbind</span>(tree.rmse,boost.rmse,final.fit<span class="op">$</span>results<span class="op">$</span>RMSE)</span>
+<span id="cb45-7"><a href="#cb45-7"></a><span class="kw">colnames</span>(compare)&lt;-<span class="kw">c</span>(<span class="st">&quot;Tree method&quot;</span>,<span class="st">&quot;Boosted method&quot;</span>,<span class="st">&quot;Linear Model&quot;</span>)</span>
+<span id="cb45-8"><a href="#cb45-8"></a>compare</span></code></pre></div>
+<pre><code>##      Tree method Boosted method Linear Model
+## [1,]    9386.627       9189.113     8898.412
+</code></pre>
+<p>In this case,we can see the linear model generates the smallest RMSE.The linear model tend to have a better prediction than the tree based method and boosted method.</p>
 
 </body>
 </html>

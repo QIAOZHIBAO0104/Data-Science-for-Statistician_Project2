@@ -294,31 +294,225 @@ boosted.method <- train(shares ~.,data = train_data,method = 'gbm',
                       trControl = trainControl(method = 'repeatedcv', number=5,repeats =2),
                       preProcess = c("center","scale"),
                       verbose = FALSE)
-
 boosted.method$results
 boosted.method$bestTune
 ```
 
+# Second Analysis
+
+## Linear model
+
+As we already removed some predictor variables based on collinearity,to
+simplify the variable selection we just pick some significant variables
+from the linear fit model,then pick a model from the candidate models.
+
+We picked `num_hrefs`, `tt{average_token_length`,
+`data_channel_is_lifestyle`, `data_channel_is_entertainment`,
+`data_channel_is_bus`,
+`data_channel_is_socmed`,`data_channel_is_tech`,`data_channel_is_world`,`self_reference_min_shares`.
+
+``` r
+# fit a linear model
+lm.fit <- lm(shares ~., data=train_data)
+summary(lm.fit)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = shares ~ ., data = train_data)
+    ## 
+    ## Residuals:
+    ##    Min     1Q Median     3Q    Max 
+    ## -15090  -2248  -1282   -111 433924 
+    ## 
+    ## Coefficients:
+    ##                                 Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)                    2.733e+03  1.329e+03   2.056 0.039841 *  
+    ## n_tokens_title                 7.888e+01  6.853e+01   1.151 0.249799    
+    ## n_tokens_content              -3.976e-01  5.144e-01  -0.773 0.439558    
+    ## n_unique_tokens                5.717e+03  4.585e+03   1.247 0.212481    
+    ## n_non_stop_words              -1.310e+03  1.565e+03  -0.837 0.402637    
+    ## n_non_stop_unique_tokens      -4.058e+03  3.877e+03  -1.047 0.295306    
+    ## num_hrefs                      1.853e+01  1.490e+01   1.244 0.213573    
+    ## num_self_hrefs                -2.148e+01  4.561e+01  -0.471 0.637724    
+    ## num_imgs                       4.918e+01  2.167e+01   2.269 0.023289 *  
+    ## num_videos                     3.476e+01  3.820e+01   0.910 0.362900    
+    ## average_token_length          -7.039e+02  5.632e+02  -1.250 0.211411    
+    ## num_keywords                   1.531e+02  7.711e+01   1.985 0.047146 *  
+    ## data_channel_is_lifestyle     -1.101e+03  8.004e+02  -1.376 0.168948    
+    ## data_channel_is_entertainment -1.960e+03  5.281e+02  -3.712 0.000207 ***
+    ## data_channel_is_bus           -8.141e+02  5.926e+02  -1.374 0.169619    
+    ## data_channel_is_socmed        -4.361e+02  7.136e+02  -0.611 0.541215    
+    ## data_channel_is_tech          -1.510e+03  5.659e+02  -2.667 0.007672 ** 
+    ## data_channel_is_world         -1.952e+03  5.759e+02  -3.389 0.000706 ***
+    ## self_reference_min_shares     -1.921e-02  2.167e-02  -0.887 0.375376    
+    ## self_reference_max_shares     -1.319e-02  1.182e-02  -1.116 0.264546    
+    ## self_reference_avg_sharess     5.381e-02  3.075e-02   1.750 0.080207 .  
+    ## global_subjectivity            5.166e+03  2.058e+03   2.510 0.012110 *  
+    ## global_sentiment_polarity     -1.013e+03  4.042e+03  -0.251 0.802026    
+    ## global_rate_positive_words    -2.602e+04  1.822e+04  -1.428 0.153453    
+    ## global_rate_negative_words     8.093e+03  3.593e+04   0.225 0.821804    
+    ## rate_positive_words            1.896e+03  3.342e+03   0.567 0.570415    
+    ## rate_negative_words            1.799e+03  3.828e+03   0.470 0.638347    
+    ## avg_positive_polarity         -5.723e+03  3.294e+03  -1.737 0.082371 .  
+    ## min_positive_polarity          2.526e+03  2.854e+03   0.885 0.376101    
+    ## max_positive_polarity          3.536e+03  1.019e+03   3.471 0.000523 ***
+    ## avg_negative_polarity         -1.116e+03  3.039e+03  -0.367 0.713459    
+    ## min_negative_polarity          1.916e+02  1.105e+03   0.173 0.862316    
+    ## max_negative_polarity          2.942e+03  2.587e+03   1.137 0.255469    
+    ## title_subjectivity            -3.365e+02  6.607e+02  -0.509 0.610540    
+    ## title_sentiment_polarity       5.471e+02  6.164e+02   0.888 0.374808    
+    ## abs_title_subjectivity        -2.627e+02  8.741e+02  -0.301 0.763746    
+    ## abs_title_sentiment_polarity  -2.645e+02  9.589e+02  -0.276 0.782717    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 9945 on 5136 degrees of freedom
+    ## Multiple R-squared:  0.02206,    Adjusted R-squared:  0.01521 
+    ## F-statistic: 3.218 on 36 and 5136 DF,  p-value: 3.519e-10
+
+Then we will fit some candidate models to select.
+
+``` r
+# Candidate models
+fit1 <- train(shares ~ num_hrefs, train_data,
+             method='lm',
+             trControl = trainControl(method = 'cv',number=10))
+fit1$results$RMSE
+```
+
+    ## [1] 8642.065
+
+``` r
+fit2 <- train(shares ~ num_hrefs+average_token_length, train_data,
+             method='lm',
+             trControl = trainControl(method = 'cv',number=10))
+fit2$results$RMSE
+```
+
+    ## [1] 8672.556
+
+``` r
+fit3 <- train(shares ~ num_hrefs+average_token_length
+              +data_channel_is_lifestyle, train_data,
+             method='lm',
+             trControl = trainControl(method = 'cv',number=10))
+fit3$results$RMSE
+```
+
+    ## [1] 8724.892
+
+``` r
+fit4 <- train(shares ~ num_hrefs+average_token_length
+              +data_channel_is_lifestyle+data_channel_is_entertainment, train_data,
+             method='lm',
+             trControl = trainControl(method = 'cv',number=10))
+fit4$results$RMSE
+```
+
+    ## [1] 8786.022
+
+``` r
+fit5 <- train(shares ~ num_hrefs+average_token_length
+              +data_channel_is_lifestyle+data_channel_is_entertainment
+              +data_channel_is_bus, train_data,
+             method='lm',
+             trControl = trainControl(method = 'cv',number=10))
+fit5$results$RMSE
+```
+
+    ## [1] 8976.562
+
+``` r
+fit6 <- train(shares ~ num_hrefs+average_token_length
+              +data_channel_is_lifestyle+data_channel_is_entertainment
+              +data_channel_is_bus+data_channel_is_socmed, train_data,
+             method='lm',
+             trControl = trainControl(method = 'cv',number=10))
+fit6$results$RMSE
+```
+
+    ## [1] 8922.157
+
+``` r
+fit7<- train(shares ~ num_hrefs+average_token_length
+              +data_channel_is_lifestyle+data_channel_is_entertainment
+              +data_channel_is_bus+data_channel_is_socmed+data_channel_is_tech, train_data,
+             method='lm',
+             trControl = trainControl(method = 'cv',number=10))
+fit7$results$RMSE
+```
+
+    ## [1] 8903.055
+
+``` r
+fit8 <- train(shares ~ num_hrefs+average_token_length
+              +data_channel_is_lifestyle+data_channel_is_entertainment
+              +data_channel_is_bus+data_channel_is_socmed+data_channel_is_tech+
+              data_channel_is_world,
+              train_data,method='lm',
+             trControl = trainControl(method = 'cv',number=10))
+fit8$results$RMSE
+```
+
+    ## [1] 8749.834
+
+``` r
+fit9 <- train(shares ~ num_hrefs+average_token_length
+              +data_channel_is_lifestyle+data_channel_is_entertainment
+              +data_channel_is_bus+data_channel_is_socmed+data_channel_is_tech+
+              data_channel_is_world+self_reference_min_shares,
+              train_data,method='lm',
+             trControl = trainControl(method = 'cv',number=10))
+fit9$results$RMSE
+```
+
+    ## [1] 8160.173
+
+Model fit7 has the lowest training RMSE with 7 variables, so we pick
+this model as our optimal model for further evaluation on test set.
+
+``` r
+# final linear model
+lm.fit.final <- as.formula(shares ~ num_hrefs+average_token_length
+              +data_channel_is_lifestyle+data_channel_is_entertainment
+              +data_channel_is_bus+data_channel_is_socmed+data_channel_is_tech)
+```
+
+Now we will calculate the test RMSE on test set for the picked linear
+model.
+
+``` r
+final.fit <- train(as.formula(shares ~ num_hrefs+average_token_length
+              +data_channel_is_lifestyle+data_channel_is_entertainment
+              +data_channel_is_bus+data_channel_is_socmed+data_channel_is_tech),
+              test_data,method='lm',
+              trControl = trainControl(method = 'cv',number=5))
+final.fit$results$RMSE
+```
+
+    ## [1] 9216.665
+
 ## Compare RMSE
 
 We will make predictions using beset model fits and test set to compare
-the RMSE of the two models.We will choose the model with a smaller RMSE
-as our optimal model.
+the RMSE of the three models.We will choose the model with a smaller
+RMSE as our final optimal model.
 
 ``` r
 # predict values on test set and compare RMSE for two models
 pred.tree <- predict(tree.method,test_data)
 pred.boost <- predict(boosted.method,test_data)
-compare <- rbind(postResample(pred.tree,test_data$shares),postResample(pred.boost,test_data$shares))
-rownames(compare)<-c("Tree method","Boosted method")
+tree.rmse <- sqrt(mean((pred.tree-test_data$shares)^2))
+boost.rmse <- sqrt(mean((pred.boost-test_data$shares)^2))
+compare <- cbind(tree.rmse,boost.rmse,final.fit$results$RMSE)
+colnames(compare)<-c("Tree method","Boosted method","Linear Model")
 compare
 ```
 
-    ##                     RMSE   Rsquared      MAE
-    ## Tree method    10020.633         NA 3043.356
-    ## Boosted method  9865.609 0.03176022 2957.865
+    ##      Tree method Boosted method Linear Model
+    ## [1,]    10020.63       9865.609     9216.665
 
-We generate two very similar RMSE,the smaller is preferred. In this
-case,we can see the boosted method generates smaller RMSE which is the
-same as we expected.The boosted method tend to have a better prediction
-than the tree based method.
+In this case,we can see the linear model generates the smallest RMSE.The
+linear model tend to have a better prediction than the tree based method
+and boosted method.
