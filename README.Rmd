@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, include=TRUE, eval=FALSE, echo=FALSE}
-rmarkdown::render("README.Rmd.Rmd", output_file= "README.md")
+rmarkdown::render("README.Rmd", output_file= "README.md")
 ```
 # Introduction  
 ## Describe the data  
@@ -130,6 +130,7 @@ boosted.method <- train(shares ~.,data = train_data,method = 'gbm',
 
 boosted.method$results
 boosted.method$bestTune
+
 ```
 ## Compare RMSE 
 
@@ -142,7 +143,8 @@ pred.boost <- predict(boosted.method,test_data)
 compare <- rbind(postResample(pred.tree,test_data$shares),postResample(pred.boost,test_data$shares))
 rownames(compare)<-c("Tree method","Boosted method")
 compare
+
 ```
-We generates two very similar RMSE,the smaller is preferred.
+We generate two very similar RMSE,the smaller is preferred.
 In this case,we can see the boosted method generates smaller RMSE which is the same as we expected.The boosted method tend to have a better prediction than the tree based method.
 

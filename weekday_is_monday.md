@@ -218,7 +218,7 @@ corrplot(correlation1,type='upper',tl.pos = 'lt')
 corrplot(correlation1,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](weekday_is_monday_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](weekday_is_monday_files/figure-gfm/unnamed-chunk-110-1.png)<!-- -->
 
 ``` r
 correlation2 <- cor(train_data[,c(11:20,52)])
@@ -226,7 +226,7 @@ corrplot(correlation2,type='upper',tl.pos = 'lt')
 corrplot(correlation2,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](weekday_is_monday_files/figure-gfm/unnamed-chunk-7-2.png)<!-- -->
+![](weekday_is_monday_files/figure-gfm/unnamed-chunk-110-2.png)<!-- -->
 
 ``` r
 correlation3 <- cor(train_data[,c(21:30,52)])
@@ -239,7 +239,7 @@ corrplot(correlation3,type='upper',tl.pos = 'lt')
 corrplot(correlation3,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](weekday_is_monday_files/figure-gfm/unnamed-chunk-7-3.png)<!-- -->
+![](weekday_is_monday_files/figure-gfm/unnamed-chunk-110-3.png)<!-- -->
 
 ``` r
 correlation4 <- cor(train_data[,c(31:40,52)])
@@ -247,7 +247,7 @@ corrplot(correlation4,type='upper',tl.pos = 'lt')
 corrplot(correlation4,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](weekday_is_monday_files/figure-gfm/unnamed-chunk-7-4.png)<!-- -->
+![](weekday_is_monday_files/figure-gfm/unnamed-chunk-110-4.png)<!-- -->
 
 ``` r
 correlation5 <- cor(train_data[,c(41:51,52)])
@@ -255,7 +255,7 @@ corrplot(correlation5,type='upper',tl.pos = 'lt')
 corrplot(correlation5,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
 ```
 
-![](weekday_is_monday_files/figure-gfm/unnamed-chunk-7-5.png)<!-- -->
+![](weekday_is_monday_files/figure-gfm/unnamed-chunk-110-5.png)<!-- -->
 
 Unfortunately I did not find any variables are strongly related with the
 response,so my plan is remove some highly correlated predictive
@@ -318,7 +318,7 @@ compare
     ## Tree method    13264.25        NA 3685.593
     ## Boosted method 12372.45 0.1711358 3569.803
 
-We generates two very similar RMSE,the smaller is preferred. In this
+We generate two very similar RMSE,the smaller is preferred. In this
 case,we can see the boosted method generates smaller RMSE which is the
 same as we expected.The boosted method tend to have a better prediction
 than the tree based method.

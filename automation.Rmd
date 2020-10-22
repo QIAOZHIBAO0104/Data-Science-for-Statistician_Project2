@@ -32,7 +32,7 @@ reports
 library(rmarkdown)
 apply(reports, MARGIN = 1,
       FUN = function(x){
-        render(input = "ST558_PROJECT2.Rmd", output_file = x[[1]], params = x[[2]])
+        render(input = "README.Rmd", output_file = x[[1]], params = x[[2]])
       })
 
 ```

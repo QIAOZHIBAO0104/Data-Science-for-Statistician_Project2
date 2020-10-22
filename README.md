@@ -370,7 +370,7 @@ compare
     ## Tree method    13264.25        NA 3685.593
     ## Boosted method 12372.45 0.1711358 3569.803
 
-We generates two very similar RMSE,the smaller is preferred. In this
+We generate two very similar RMSE,the smaller is preferred. In this
 case,we can see the boosted method generates smaller RMSE which is the
 same as we expected.The boosted method tend to have a better prediction
 than the tree based method.
