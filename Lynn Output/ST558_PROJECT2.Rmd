@@ -1,0 +1,266 @@
+---
+title: "ST558_PROJECT2"
+author: "Qiaozhi Bao"
+date: "2020/10/6"
+params:
+  weekday: weekday_is_monday
+output:
+  rmarkdown::github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=TRUE, eval=FALSE, echo=FALSE}
+rmarkdown::render("README.Rmd", output_file= "README.md")
+```
+# Introduction  
+## Describe the data  
+The [Online News Popularity data set]("https://archive.ics.uci.edu/ml/datasets/Online+News+Popularity") was published two years ago to summarize a heterogeneous set of features about articles published by Mashable in a period of two years.
+There are 61 variables in total from the data set above: 58 predictive attributes, 2 non-predictive and 1 goal field.More details and summarization will be discussed later in this project.
+
+##  The purpose of Analysis  
+
+The purpose of this analysis is to create two models(ensemble and not ensemble) to generate the best predict of the response attribute--shares.Our analysis will help to determine what kind of content would be most popular.
+
+## Methods  
+
+For this project,I first split the data into training set and test set,then I examine the data with summary statistics and correlation plots to see the relationships between predictive attributes and the relationship between predictive attributes and response variables,then some meaningless variables were moved.
+I then utilized the caret package to create two models.Tree-based model chosen using leave one out cross validation.Boosted tree model chosen using cross-validation.
+
+# Data Study
+## Description of the Used Data
+
+As our study intention is to predict the popularity of an article, so we choose the shares as the response variable.After plotting the correlations between variables, we removed some high related predictive variables.
+The two models were fitted by remaining variables in the training set. 
+
+```{r,message=FALSE}
+# Load all libraries
+library(tidyverse)
+library(ggplot2)
+library(randomForest)
+library(caret)
+library(tree)
+library(gbm)
+library(corrplot)
+library(e1071)
+set.seed(1)
+```
+```{r}
+# Read in data and removing the first two columns as they are not predictive variables.
+news_pop <- read_csv('./OnlineNewsPopularity.csv') %>% select(-`url`,-`timedelta`)
+params$weekday
+```
+
+```{r}
+# First to see Monday data
+data <- news_pop%>% select(!starts_with('weekday_is'),params$weekday)
+# Check if we have missing values, answer is 'No'
+sum(is.na(data))
+data <-data %>% filter(data[,53]==1) %>%select(-params$weekday)
+```
+
+As there is no missing value in our Monday data, we will step to split data.
+By using sample(), with 70% of the data goes to the training set (4,662 observations, Mon_train) and 30% goes to the test set (1,999 observations, Mon_test).
+
+```{r}
+# Split Monday data,70% for training set and 30% for test set
+set.seed(1)
+train <- sample(1:nrow(data),size = nrow(data)*0.7)
+test <- dplyr::setdiff(1:nrow(data),train)
+train_data <-data[train,]
+test_data <- data[test,]
+```
+# Data Summarizations
+## Predictor Variables   
+I used the `summary()` function to calculate summary statistics for each of the quantitative variables in data.I divided the data into trunks to make plots easier to compare.
+
+```{r}
+summary(train_data)
+correlation1 <- cor(train_data[,c(1:10,52)])
+corrplot(correlation1,type='upper',tl.pos = 'lt')
+corrplot(correlation1,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
+correlation2 <- cor(train_data[,c(11:20,52)])
+corrplot(correlation2,type='upper',tl.pos = 'lt')
+corrplot(correlation2,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
+correlation3 <- cor(train_data[,c(21:30,52)])
+corrplot(correlation3,type='upper',tl.pos = 'lt')
+corrplot(correlation3,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
+correlation4 <- cor(train_data[,c(31:40,52)])
+corrplot(correlation4,type='upper',tl.pos = 'lt')
+corrplot(correlation4,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
+correlation5 <- cor(train_data[,c(41:51,52)])
+corrplot(correlation5,type='upper',tl.pos = 'lt')
+corrplot(correlation5,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
+```
+
+Unfortunately I did not find any variables are strongly related with the response,so my plan is remove some highly correlated predictive variables.
+From the correlation plot,I decided to remove some meaningless variables:`is_weekend`,variables start with "LDA".
+Also some highly correlated variables will be removed too,like variables start with"kw",then we will get a new train set and test set.  
+
+```{r}
+#Remove meaningless variabls
+train_data <- train_data %>% select(!starts_with("LDA"),-is_weekend)
+test_data <- test_data %>% select(!starts_with("LDA"),-is_weekend)
+train_data <- train_data %>% select(!starts_with('kw'))
+test_data <- train_data %>% select(!starts_with('kw'))
+```
+
+
+# First Model
+## Tree based model chosen using leave one out cross validation  
+
+```{r}
+tree.method <- train(shares ~.,data = train_data,method='rpart',
+                       preProcess = c("center","scale"),
+                     trControl = trainControl(method ='LOOCV'))
+tree.method$results
+tree.method$bestTune
+```
+# Second Model
+## Boosted tree model chosen using cross-validation  
+
+```{r}
+# We will fit the model using repeated CV
+boosted.method <- train(shares~.,data = train_data,method = 'gbm',
+                      trControl = trainControl(method = 'repeatedcv', number=5,repeats =2),
+                      preProcess = c("center","scale"),
+                      verbose = FALSE)
+boosted.method$results
+boosted.method$bestTune
+```
+# Second Analysis  
+## Linear model  
+
+As we already removed some predictor variables based on collinearity,to simplify the variable selection we just pick some significant variables from the linear fit model,then pick a model from the candidate models.
+
+We picked $t\{num_hrefs}$, $\tt{average_token_length}$ $\tt{data_channel_is_lifestyle}$ $\tt{data_channel_is_entertainment}$ $\tt{data_channel_is_bus}$, $\tt{data_channel_is_socmed}$,$\tt{data_channel_is_tech}$,$\tt{data_channel_is_world}$,$\tt{self_reference_min_shares}$.
+
+```{r}
+# fit a linear model
+lm.fit <- lm(shares ~., data=train_data)
+summary(lm.fit)
+```
+
+Then we will fit some candidate models to select.
+
+```{r}
+# Candidate models
+fit1 <- train(shares ~ num_hrefs, train_data,
+             method='lm',
+             trControl = trainControl(method = 'cv',number=10))
+fit1$results$RMSE
+
+fit2 <- train(shares ~ num_hrefs+average_token_length, train_data,
+             method='lm',
+             trControl = trainControl(method = 'cv',number=10))
+fit2$results$RMSE
+
+fit3 <- train(shares ~ num_hrefs+average_token_length
+              +data_channel_is_lifestyle, train_data,
+             method='lm',
+             trControl = trainControl(method = 'cv',number=10))
+fit3$results$RMSE
+fit4 <- train(shares ~ num_hrefs+average_token_length
+              +data_channel_is_lifestyle+data_channel_is_entertainment, train_data,
+             method='lm',
+             trControl = trainControl(method = 'cv',number=10))
+fit4$results$RMSE
+fit5 <- train(shares ~ num_hrefs+average_token_length
+              +data_channel_is_lifestyle+data_channel_is_entertainment
+              +data_channel_is_bus, train_data,
+             method='lm',
+             trControl = trainControl(method = 'cv',number=10))
+fit5$results$RMSE
+fit6 <- train(shares ~ num_hrefs+average_token_length
+              +data_channel_is_lifestyle+data_channel_is_entertainment
+              +data_channel_is_bus+data_channel_is_socmed, train_data,
+             method='lm',
+             trControl = trainControl(method = 'cv',number=10))
+fit6$results$RMSE
+fit7<- train(shares ~ num_hrefs+average_token_length
+              +data_channel_is_lifestyle+data_channel_is_entertainment
+              +data_channel_is_bus+data_channel_is_socmed+data_channel_is_tech, train_data,
+             method='lm',
+             trControl = trainControl(method = 'cv',number=10))
+fit7$results$RMSE
+
+fit8 <- train(shares ~ num_hrefs+average_token_length
+              +data_channel_is_lifestyle+data_channel_is_entertainment
+              +data_channel_is_bus+data_channel_is_socmed+data_channel_is_tech+
+              data_channel_is_world,
+              train_data,method='lm',
+             trControl = trainControl(method = 'cv',number=10))
+fit8$results$RMSE
+
+fit9 <- train(shares ~ num_hrefs+average_token_length
+              +data_channel_is_lifestyle+data_channel_is_entertainment
+              +data_channel_is_bus+data_channel_is_socmed+data_channel_is_tech+
+              data_channel_is_world+self_reference_min_shares,
+              train_data,method='lm',
+             trControl = trainControl(method = 'cv',number=10))
+fit9$results$RMSE
+```
+
+Model fit7 has the lowest training RMSE with 7 variables, so we pick this model as our optimal model for further evaluation on test set.
+
+```{r}
+# final linear model
+lm.fit.final <- as.formula(shares ~ num_hrefs+average_token_length
+              +data_channel_is_lifestyle+data_channel_is_entertainment
+              +data_channel_is_bus+data_channel_is_socmed+data_channel_is_tech)
+```
+Now we will calculate the test RMSE on test set for the picked linear model.
+```{r}
+final.fit <- train(as.formula(shares ~ num_hrefs+average_token_length
+              +data_channel_is_lifestyle+data_channel_is_entertainment
+              +data_channel_is_bus+data_channel_is_socmed+data_channel_is_tech),
+              test_data,method='lm',
+              trControl = trainControl(method = 'cv',number=5))
+final.fit$results$RMSE
+```
+## Compare RMSE 
+
+We will make predictions using beset model fits and test set to compare the RMSE of the three models.We will choose the model with a smaller RMSE as our final optimal model.
+
+```{r}
+# predict values on test set and compare RMSE for two models
+pred.tree <- predict(tree.method,test_data)
+pred.boost <- predict(boosted.method,test_data)
+tree.rmse <- sqrt(mean((pred.tree-test_data$shares)^2))
+boost.rmse <- sqrt(mean((pred.boost-test_data$shares)^2))
+compare <- cbind(tree.rmse,boost.rmse,final.fit$results$RMSE)
+colnames(compare)<-c("Tree method","Boosted method","Linear Model")
+compare
+```
+In this case,we can see the linear model generates the smallest RMSE,that is 11901.25. The linear model tend to have a better prediction than the tree based method and boosted method.
+
+# Linear Model
+Project partner Lynn Huang added a simple linear model here to practice GitHub forking and pull requesting practices. Nothing fancy for the model, which means an atrocious fit is to be expected!  
+```{r Lynn}
+fit.lynn <- lm(shares ~ ., data=train_data)
+summ <- summary(fit.lynn)
+rsquared <- summ$adj.r.squared
+
+# Let's only keep the significant predictors and do 10-fold CV on that
+fit.lynnCV <- train(shares ~ average_token_length + data_channel_is_lifestyle + kw_min_avg + kw_max_avg + 
+                      kw_avg_avg + self_reference_min_shares,
+                    data=train_data,
+                    method="lm",
+                    trControl=trainControl(method="cv", number=10))
+# As expected, we have an atrocious fit (huge RMSE, tiny Rsquared)
+fit.lynnCV$results
+rmse.lynn <- fit.lynnCV$results$RMSE
+rsquared.lynn <- fit.lynnCV$results$Rsquared
+
+# Well, let's run this atrocious model on the test data!
+pred.lynn <- predict(fit.lynnCV, newdata=test_data)
+# A snapshot of the results
+results.preview <- rbind(head(pred.lynn), head(test_data$shares))
+rownames(results.preview) <- c("Predicted Shares", "Actual Shares")
+results.preview
+# Calculate test RMSE
+rmse.test.lynn <- sqrt(mean(((pred.lynn - test-data$shares)^2)))
+```
+As we can see, the naively produced and trained linear model is terrible at prediction, with a huge RMSE of `r rmse.lynn` and tiny R-squared `r rsquared.lynn` that both reflect poor fit. The mini-comparison table between the model predictions and actual values shows a huge discrepancy. The test RMSE was calculated to be `r rmse.test.lynn`.
