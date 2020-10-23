@@ -28,7 +28,6 @@ params =lapply(weekdays,FUN=function(x)(list(weekday=x)))
 reports <- tibble(output_file, params)
 reports
 
-
 library(rmarkdown)
 apply(reports, MARGIN = 1,
       FUN = function(x){
