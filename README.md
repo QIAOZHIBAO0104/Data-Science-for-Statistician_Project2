@@ -18,22 +18,22 @@ discussed later in this project.
 The purpose of this analysis is to create three models based on tree based method,boosted tree model and linear model to generate the best prediction of the response attribute ``shares``,Our analysis will help to determine what kind of content would be most popular.
 
 # Packages
-## tidyverse
-## ggplot2
-## randomForest
-## caret
-## tree
-## gbm
-## corrplot
-## e1071
+### tidyverse
+### ggplot2
+### randomForest
+### caret
+### tree
+### gbm
+### corrplot
+### e1071
 
 # Analysis 
-## [Sunday](weekday_is_sunday.md)
-## [Monday](https://github.com/QIAOZHIBAO0104/ST558-Project2/blob/main/weekday_is_monday.md)
-## [Tuesday](https://github.com/QIAOZHIBAO0104/ST558-Project2/blob/main/weekday_is_tuesday.md)
-## [Thrusday](https://github.com/QIAOZHIBAO0104/ST558-Project2/blob/main/weekday_is_thursday.md)
-## [Friday](https://github.com/QIAOZHIBAO0104/ST558-Project2/blob/main/weekday_is_friday.md)
-## [Saturday](https://github.com/QIAOZHIBAO0104/ST558-Project2/blob/main/weekday_is_saturday.md)
+### [Sunday](weekday_is_sunday.md)
+### [Monday](https://github.com/QIAOZHIBAO0104/ST558-Project2/blob/main/weekday_is_monday.md)
+### [Tuesday](https://github.com/QIAOZHIBAO0104/ST558-Project2/blob/main/weekday_is_tuesday.md)
+### [Thrusday](https://github.com/QIAOZHIBAO0104/ST558-Project2/blob/main/weekday_is_thursday.md)
+### [Friday](https://github.com/QIAOZHIBAO0104/ST558-Project2/blob/main/weekday_is_friday.md)
+### [Saturday](https://github.com/QIAOZHIBAO0104/ST558-Project2/blob/main/weekday_is_saturday.md)
 
 
 # Automation Code
