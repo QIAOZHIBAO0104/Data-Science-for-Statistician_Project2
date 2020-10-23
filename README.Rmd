@@ -130,20 +130,41 @@ boosted.method <- train(shares ~.,data = train_data,method = 'gbm',
 boosted.method$results
 boosted.method$bestTune
 ```
+# Second analysis
+As we already removed some predictor variables based on collinearity,to simplify the variable selection we just pick some significant variables from the linear fit model,then pick a model from the candidate models.
 
+We picked num_hrefs, tt{average_token_length, data_channel_is_lifestyle, data_channel_is_entertainment, data_channel_is_bus, data_channel_is_socmed,data_channel_is_tech,data_channel_is_world,self_reference_min_shares.
+```{r}
+# fit a linear model
+lm.fit <- lm(shares ~., data=train_data)
+summary(lm.fit)
+```
+```{r}
+# final linear model
+lm.fit.final <- as.formula(shares ~ num_hrefs+average_token_length
+              +data_channel_is_lifestyle+data_channel_is_entertainment
+              +data_channel_is_bus+data_channel_is_socmed+data_channel_is_tech)
+# Calculate the test RMSE
+final.fit <- train(as.formula(shares ~ num_hrefs+average_token_length
+              +data_channel_is_lifestyle+data_channel_is_entertainment
+              +data_channel_is_bus+data_channel_is_socmed+data_channel_is_tech),
+              test_data,method='lm',
+              trControl = trainControl(method = 'cv',number=5))
+final.fit$results$RMSE
+
+```
 
 ## Compare RMSE 
 
 We will make predictions using beset model fits and test set to compare the RMSE of the two models.We will choose the model with a smaller RMSE as our final optimal model.
 
 ```{r}
-# predict values on test set and compare RMSE for two models
 pred.tree <- predict(tree.method,test_data)
 pred.boost <- predict(boosted.method,test_data)
 tree.rmse <- sqrt(mean((pred.tree-test_data$shares)^2))
 boost.rmse <- sqrt(mean((pred.boost-test_data$shares)^2))
-compare <- cbind(tree.rmse,boost.rmse)
-colnames(compare)<-c("Tree method","Boosted method")
+compare <- cbind(tree.rmse,boost.rmse,final.fit$results$RMSE)
+colnames(compare)<-c("Tree method","Boosted method","Linear Model")
 compare
 ```
 In this case,we can see the boosted method generates the smallest RMSE.The  boosted method tend to have a better prediction than the tree based method.
