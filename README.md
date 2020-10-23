@@ -28,7 +28,7 @@ corrplot
 e1071
 
 # Analysis 
-[Sunday](https://github.com/QIAOZHIBAO0104/ST558-Project2/blob/main/weekday_is_sunday.md)
+[Sunday](weekday_is_sunday.md)
 [Monday](https://github.com/QIAOZHIBAO0104/ST558-Project2/blob/main/weekday_is_monday.md)
 [Tuesday](https://github.com/QIAOZHIBAO0104/ST558-Project2/blob/main/weekday_is_tuesday.md)
 [Thrusday](https://github.com/QIAOZHIBAO0104/ST558-Project2/blob/main/weekday_is_thursday.md)
@@ -37,7 +37,7 @@ e1071
 
 
 # Automation Code
-
+```{r}
 news_pop <- read_csv('./OnlineNewsPopularity.csv') %>% select(-`url`,-`timedelta`)
 data.frame(output_file ="MondayAnalysis.md",params = list(weekday="weekday_is_Monday"))
 weekdays <- c("weekday_is_monday", "weekday_is_tuesday", "weekday_is_wednesday",
@@ -52,6 +52,7 @@ apply(reports, MARGIN = 1,
       FUN = function(x){
         render(input = "README.Rmd", output_file = x[[1]], params = x[[2]])
       })
-      
+```
+
 # Conclusion
 Linear model is the optimal model as it generates the smallest RMSE on test set.
