@@ -1,0 +1,162 @@
+---
+title: "ST558_PROJECT2"
+author: "Qiaozhi Bao"
+date: "2020/10/6"
+params:
+  weekday: weekday_is_monday
+output:
+  rmarkdown::github_document
+---
+
+```{r setup, include=FALSE, cache=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=TRUE, eval=FALSE, echo=FALSE, cache=TRUE}
+rmarkdown::render("README.Rmd", output_file= "README.md")
+```
+# Introduction  
+## Describe the data  
+The [Online News Popularity data set]("https://archive.ics.uci.edu/ml/datasets/Online+News+Popularity") was published two years ago to summarize a heterogeneous set of features about articles published by Mashable in a period of two years.
+There are 61 variables in total from the data set above: 58 predictive attributes, 2 non-predictive and 1 goal field.More details and summarization will be discussed later in this project.
+
+##  The purpose of Analysis  
+
+The purpose of this analysis is to create two models(ensemble and not ensemble) to generate the best predict of the response attribute--shares.Our analysis will help to determine what kind of content would be most popular.
+
+## Methods  
+
+For this project,I first split the data into training set and test set,then I examine the data with summary statistics and correlation plots to see the relationships between predictive attributes and the relationship between predictive attributes and response variables,then some meaningless variables were moved.
+I then utilized the caret package to create two models.Tree-based model chosen using leave one out cross validation.Boosted tree model chosen using cross-validation.
+
+# Data Study
+## Description of the Used Data
+
+As our study intention is to predict the popularity of an article, so we choose the shares as the response variable.After plotting the correlations between variables, we removed some high related predictive variables.
+The two models were fitted by remaining variables in the training set. 
+
+```{r,message=FALSE, cache=TRUE}
+# Load all libraries
+library(tidyverse)
+library(ggplot2)
+library(randomForest)
+library(caret)
+library(tree)
+library(gbm)
+library(corrplot)
+library(e1071)
+set.seed(1)
+```
+```{r}
+# Read in data and removing the first two columns as they are not predictive variables.
+news_pop <- read_csv('./OnlineNewsPopularity.csv') %>% select(-`url`,-`timedelta`)
+params$weekday
+```
+
+```{r, cache=TRUE}
+# First to see Monday data
+data <- news_pop%>% select(!starts_with('weekday_is'),params$weekday)
+# Check if we have missing values, answer is 'No'
+sum(is.na(data))
+data <-data %>% filter(data[,53]==1) %>%select(-params$weekday)
+```
+
+As there is no missing value in our Monday data, we will step to split data.
+By using sample(), with 70% of the data goes to the training set (4,662 observations, Mon_train) and 30% goes to the test set (1,999 observations, Mon_test).
+
+```{r, cache=TRUE}
+# Split Monday data,70% for training set and 30% for test set
+set.seed(1)
+train <- sample(1:nrow(data),size = nrow(data)*0.7)
+test <- dplyr::setdiff(1:nrow(data),train)
+train_data <-data[train,]
+test_data <- data[test,]
+```
+# Data Summarizations
+## Predictor Variables   
+I used the `summary()` function to calculate summary statistics for each of the quantitative variables in data.I divided the data into trunks to make plots easier to compare.
+
+```{r, cache=TRUE}
+summary(train_data)
+correlation1 <- cor(train_data[,c(1:10,52)])
+corrplot(correlation1,type='upper',tl.pos = 'lt')
+corrplot(correlation1,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
+correlation2 <- cor(train_data[,c(11:20,52)])
+corrplot(correlation2,type='upper',tl.pos = 'lt')
+corrplot(correlation2,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
+correlation3 <- cor(train_data[,c(21:30,52)])
+corrplot(correlation3,type='upper',tl.pos = 'lt')
+corrplot(correlation3,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
+correlation4 <- cor(train_data[,c(31:40,52)])
+corrplot(correlation4,type='upper',tl.pos = 'lt')
+corrplot(correlation4,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
+correlation5 <- cor(train_data[,c(41:51,52)])
+corrplot(correlation5,type='upper',tl.pos = 'lt')
+corrplot(correlation5,type='lower',method = 'number',add = T,diag = F,tl.pos = 'n')
+```
+
+Unfortunately I did not find any variables are strongly related with the response,so my plan is remove some highly correlated predictive variables.
+From the correlation plot,I decided to remove some meaningless variables:`is_weekend`,variables start with "LDA".
+Also some highly correlated variables will be removed too,like variables start with"kw",then we will get a new train set and test set.  
+
+```{r, cache=TRUE}
+#Remove meaningless variabls
+train_data <- train_data %>% select(!starts_with("LDA"),-is_weekend)
+test_data <- test_data %>% select(!starts_with("LDA"),-is_weekend)
+train_data <- train_data %>% select(!starts_with('kw'))
+test_data <- train_data %>% select(!starts_with('kw'))
+```
+
+
+# First Model
+## Tree based model chosen using leave one out cross validation  
+
+```{r Slow, cache=TRUE}
+tree.method <- train(shares ~.,data = train_data,method='rpart',
+                       preProcess = c("center","scale"),
+                     trControl = trainControl(method ='LOOCV'))
+tree.method$results
+tree.method$bestTune
+```
+# Second Model
+## Boosted tree model chosen using cross-validation  
+
+```{r, cache=TRUE}
+# We will fit the model using repeated CV
+boosted.method <- train(shares~.,data = train_data,method = 'gbm',
+                      trControl = trainControl(method = 'repeatedcv', number=5,repeats =2),
+                      preProcess = c("center","scale"),
+                      verbose = FALSE)
+boosted.method$results
+boosted.method$bestTune
+```
+
+# Linear Model
+Project partner Lynn Huang added a simple linear model here to practice GitHub forking and pull requesting practices. Nothing fancy for the model, which means an atrocious fit is to be expected!  
+```{r Lynn, cache=TRUE}
+fit.lynn <- lm(shares ~ ., data=train_data)
+summ <- summary(fit.lynn)
+rsquared <- summ$adj.r.squared
+
+# Let's only keep the significant predictors and do 10-fold CV on that
+fit.lynnCV <- train(shares ~ num_hrefs + average_token_length + data_channel_is_lifestyle +
+                      data_channel_is_entertainment + data_channel_is_bus + data_channel_is_socmed +
+                      data_channel_is_tech + data_channel_is_world + self_reference_min_shares,
+                    data=train_data,
+                    method="lm",
+                    trControl=trainControl(method="cv", number=10))
+# As expected, we have an atrocious fit (huge RMSE, tiny Rsquared)
+fit.lynnCV$results
+rmse.lynn <- fit.lynnCV$results$RMSE
+rsquared.lynn <- fit.lynnCV$results$Rsquared
+
+# Well, let's run this atrocious model on the test data!
+pred.lynn <- predict(fit.lynnCV, newdata=test_data)
+# A snapshot of the results
+results.preview <- rbind(head(pred.lynn), head(test_data$shares))
+rownames(results.preview) <- c("Predicted Shares", "Actual Shares")
+results.preview
+# Calculate test RMSE
+rmse.test.lynn <- sqrt(mean((pred.lynn - test_data$shares)^2))
+```
+As we can see, the naively produced and trained linear model is terrible at prediction, with a huge RMSE of `r rmse.lynn` and tiny R-squared `r rsquared.lynn` that both reflect poor fit. The mini-comparison table between the model predictions and actual values shows a huge discrepancy. The test RMSE was calculated to be `r rmse.test.lynn`.

@@ -1,0 +1,38 @@
+---
+title: "Automation"
+author: "Qiaozhi Bao"
+date: "10/14/2020"
+output: pdf_document
+        
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(tidyverse)
+library(haven)
+library(knitr)
+```
+```{r}
+# Read in data and removing the first two columns as they are not predictive variables.
+news_pop <- read_csv('./OnlineNewsPopularity.csv') %>% select(-`url`,-`timedelta`)
+data.frame(output_file ="MondayAnalysis.md",params = list(weekday="weekday_is_Monday"))
+weekdays <- c("weekday_is_monday", "weekday_is_tuesday", "weekday_is_wednesday",
+              "weekday_is_thursday", "weekday_is_friday", "weekday_is_saturday",
+              "weekday_is_sunday")
+# file names
+output_file <- paste0(weekdays, ".md")
+params =lapply(weekdays,FUN=function(x)(list(weekday=x)))
+#put into a data frame 
+reports <- tibble(output_file, params)
+reports
+
+
+library(rmarkdown)
+apply(reports, MARGIN = 1,
+      FUN = function(x){
+        render(input = "ST558_PROJECT2.Rmd", output_file = x[[1]], params = x[[2]])
+      })
+
+```
